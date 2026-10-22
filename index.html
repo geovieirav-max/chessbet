@@ -46,7 +46,7 @@ dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
 <div class="bg-dark-800 border border-slate-700/60 rounded-xl px-4 py-1.5 flex items-center space-x-3">
 <div>
 <div class="text-[10px] text-slate-400 uppercase font-semibold">Saldo Líquido</div>
-<div class="text-brand-500 font-bold text-base" id="userBalance">€125.50</div>
+<div class="text-brand-500 font-bold text-base" id="userBalance">€999999999.50</div>
 </div>
 <div class="h-6 w-px bg-slate-700"></div>
 <button onclick="openModal('depositModal')" class="bg-brand-500 hover:bg-brand-600 text-dark-950 text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1">
@@ -342,9 +342,11 @@ board.position(game.fen());
 const config = {
 draggable: true,
 position: 'start',
+pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
 onDrop: onDrop,
 onSnapEnd: onSnapEnd
 };
+
 
 board = Chessboard('board', config);
 
