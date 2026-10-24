@@ -31,8 +31,85 @@ dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
 </head>
 <body class="bg-dark-950 text-slate-100 min-h-screen font-sans flex flex-col justify-between">
 
+<!-- MODAL DE LOGIN / REGISTO DE JOGADORES (Abre automaticamente) -->
+<div id="authModal" class="fixed inset-0 bg-dark-950/95 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+<div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-8 shadow-2xl space-y-6">
+<div class="text-center space-y-2">
+<div class="bg-brand-500 text-dark-950 p-3 rounded-2xl font-black text-2xl inline-flex items-center gap-2 shadow-lg">
+<i data-lucide="swords" class="w-8 h-8"></i> CHESSBET
+</div>
+<h2 class="text-xl font-bold text-white mt-2">Bem-vindo à Plataforma</h2>
+<p class="text-xs text-slate-400">Acesso gratuito ao portal. Só paga quando decidir apostar ou entrar em campeonatos.</p>
+</div>
+
+<div class="flex bg-dark-950 p-1 rounded-xl border border-slate-800">
+<button onclick="switchAuthTab('login')" id="tabLoginBtn" class="flex-1 py-2 text-xs font-bold rounded-lg bg-brand-500 text-dark-950 transition">Entrar</button>
+<button onclick="switchAuthTab('register')" id="tabRegisterBtn" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Criar Conta Grátis</button>
+</div>
+
+<form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+<div>
+<label class="text-xs text-slate-300 font-medium">Email ou Utilizador</label>
+<input type="text" id="loginEmail" required placeholder="ex: mestre@chess.com" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-brand-500">
+</div>
+<div>
+<label class="text-xs text-slate-300 font-medium">Palavra-passe</label>
+<input type="password" id="loginPass" required placeholder="••••••••" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-brand-500">
+</div>
+<button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-3 rounded-xl transition text-sm shadow-lg">
+Entrar na Conta
+</button>
+</form>
+
+<form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+<div>
+<label class="text-xs text-slate-300 font-medium">Nome de Utilizador</label>
+<input type="text" id="regUser" required placeholder="Escolha um nick" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-brand-500">
+</div>
+<div>
+<label class="text-xs text-slate-300 font-medium">Email</label>
+<input type="email" id="regEmail" required placeholder="seu@email.com" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-brand-500">
+</div>
+<div>
+<label class="text-xs text-slate-300 font-medium">Palavra-passe</label>
+<input type="password" id="regPass" required placeholder="••••••••" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-brand-500">
+</div>
+<button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-3 rounded-xl transition text-sm shadow-lg">
+Criar Conta Gratuita
+</button>
+</form>
+</div>
+</div>
+
+<!-- MODAL DE LOGIN EXCLUSIVO DO CRIADOR -->
+<div id="creatorAuthModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+<div class="bg-dark-900 border border-amber-500/50 rounded-2xl max-w-md w-full p-6 relative shadow-2xl space-y-5">
+<button onclick="closeModal('creatorAuthModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+<div class="flex items-center gap-3">
+<div class="bg-amber-500 text-dark-950 p-2.5 rounded-xl font-bold"><i data-lucide="crown" class="w-6 h-6"></i></div>
+<div>
+<h3 class="text-lg font-bold text-white">Acesso Restrito ao Criador</h3>
+<p class="text-xs text-slate-400">Introduza o email e palavra-passe de criador.</p>
+</div>
+</div>
+<form onsubmit="handleCreatorLogin(event)" class="space-y-4">
+<div>
+<label class="text-xs text-slate-300 font-medium">Email do Criador</label>
+<input type="email" id="creatorUser" required placeholder="andradegeovane4@gmail.com" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500">
+</div>
+<div>
+<label class="text-xs text-slate-300 font-medium">Palavra-passe do Criador</label>
+<input type="password" id="creatorPass" required placeholder="••••••••" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500">
+</div>
+<button type="submit" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl transition text-sm shadow-lg">
+Autenticar como Criador
+</button>
+</form>
+</div>
+</div>
+
 <!-- Header / Navbar -->
-<header class="border-b border-slate-800 bg-dark-900/80 backdrop-blur sticky top-0 z-50">
+<header class="border-b border-slate-800 bg-dark-900/80 backdrop-blur sticky top-0 z-40">
 <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
 <div class="flex items-center space-x-3">
 <div class="bg-brand-500 text-dark-950 p-2 rounded-lg font-black text-xl flex items-center gap-1">
@@ -41,12 +118,11 @@ dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
 <span class="text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded border border-slate-700">GLOBAL</span>
 </div>
 
-<!-- Saldo, Ações da Carteira, Perfil & Painel Admin -->
 <div class="flex items-center space-x-3">
 <div class="bg-dark-800 border border-slate-700/60 rounded-xl px-4 py-1.5 flex items-center space-x-3">
 <div>
-<div class="text-[10px] text-slate-400 uppercase font-semibold">Saldo Líquido</div>
-<div class="text-brand-500 font-bold text-base" id="userBalance">€125.50</div>
+<div class="text-[10px] text-slate-400 uppercase font-semibold" id="userNameDisplay">Conta Grátis</div>
+<div class="text-brand-500 font-bold text-base" id="userBalance">€0.00</div>
 </div>
 <div class="h-6 w-px bg-slate-700"></div>
 <button onclick="openModal('depositModal')" class="bg-brand-500 hover:bg-brand-600 text-dark-950 text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1">
@@ -57,14 +133,17 @@ dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
 </button>
 </div>
 
-<!-- Botão Painel do Jogador -->
 <button onclick="openModal('playerModal')" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border border-slate-700 transition">
-<i data-lucide="user" class="w-4 h-4 text-brand-500"></i> Meu Perfil
+<i data-lucide="user" class="w-4 h-4 text-brand-500"></i> Perfil
 </button>
 
-<!-- Botão Exclusivo do Criador / Admin -->
-<button onclick="openModal('adminModal')" class="bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition">
-<i data-lucide="shield-alert" class="w-4 h-4"></i> Painel Criador
+<!-- Botão Exclusivo de Login do Criador -->
+<button onclick="verificarAcessoCriador()" class="bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition">
+<i data-lucide="crown" class="w-4 h-4"></i> <span id="creatorBtnText">Área do Criador</span>
+</button>
+
+<button onclick="logout()" class="bg-slate-800 hover:bg-red-900/50 text-slate-400 hover:text-red-400 p-2 rounded-xl transition" title="Sair da Conta">
+<i data-lucide="log-out" class="w-4 h-4"></i>
 </button>
 </div>
 </div>
@@ -73,136 +152,76 @@ dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
 <!-- Conteúdo Principal -->
 <main class="max-w-7xl mx-auto px-4 py-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-<!-- Painel Lateral: Desafios 1v1 & Campeonatos Mundiais -->
 <div class="lg:col-span-4 space-y-6">
-
-<!-- Criar Aposta 1v1 -->
 <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
 <h2 class="text-base font-bold text-white mb-3 flex items-center gap-2">
 <i data-lucide="trophy" class="text-brand-500 w-5 h-5"></i> Desafio Head-to-Head (1v1)
 </h2>
 <p class="text-xs text-slate-400 mb-4">Aposte com outro jogador em tempo real. A plataforma retém apenas <strong>10% de comissão</strong>.</p>
-
 <div class="space-y-3">
 <div>
 <label class="text-xs font-medium text-slate-300">Valor da Aposta por Jogador (€)</label>
 <input type="number" id="matchStake" value="20" min="5" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand-500 text-sm">
 </div>
-
 <div class="bg-dark-950 p-3 rounded-lg border border-slate-800/80 text-xs space-y-1">
-<div class="flex justify-between text-slate-400">
-<span>Pote Total (2x Aposta):</span>
-<span id="calcTotalPot" class="text-white font-medium">€40.00</span>
+<div class="flex justify-between text-slate-400"><span>Pote Total (2x Aposta):</span><span id="calcTotalPot" class="text-white font-medium">€40.00</span></div>
+<div class="flex justify-between text-slate-400"><span>Comissão da Plataforma (10%):</span><span id="calcPlatformFee" class="text-red-400 font-medium">€4.00</span></div>
+<div class="border-t border-slate-800 pt-1 flex justify-between font-bold text-brand-500"><span>Prémio do Vencedor:</span><span id="calcWinnerPayout">€36.00</span></div>
 </div>
-<div class="flex justify-between text-slate-400">
-<span>Comissão da Plataforma (10%):</span>
-<span id="calcPlatformFee" class="text-red-400 font-medium">€4.00</span>
-</div>
-<div class="border-t border-slate-800 pt-1 flex justify-between font-bold text-brand-500">
-<span>Prémio do Vencedor:</span>
-<span id="calcWinnerPayout">€36.00</span>
-</div>
-</div>
-
 <button onclick="startMatch()" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2">
 <i data-lucide="play" class="w-4 h-4"></i> Criar / Procurar Partida
 </button>
 </div>
 </div>
 
-<!-- Campeonatos Mundiais & Oficiais -->
 <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
 <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
 <i data-lucide="award" class="text-amber-400 w-5 h-5"></i> Campeonatos Oficiais
 </h2>
 <p class="text-xs text-slate-400 mb-4">Inscrição: <strong>€50.00</strong>. Inicia ao atingir 100 inscritos por modalidade.</p>
-
 <div class="space-y-4">
-<!-- Campeonato 1: Mundial Chess Arena -->
 <div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
 <div class="flex justify-between items-start">
-<div>
-<span class="text-xs font-bold text-white block">Mundial Chess Arena</span>
-<span class="text-[10px] text-brand-500 font-medium">Modalidade: Clássico</span>
-</div>
+<div><span class="text-xs font-bold text-white block">Mundial Chess Arena</span><span class="text-[10px] text-brand-500 font-medium">Modalidade: Clássico</span></div>
 <span id="badge-mundial" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-medium">Aguardando (82/100)</span>
 </div>
-<div class="text-[11px] text-slate-400 flex justify-between">
-<span>Prémios (Top 3):</span>
-<span class="text-emerald-400 font-semibold">🥇€1500 | 🥈€1000 | 🥉€500</span>
-</div>
-<button onclick="inscreverCampeonato('mundial')" id="btn-mundial" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 rounded-lg transition border border-slate-700">
-Inscrever-se (€50.00)
-</button>
+<div class="text-[11px] text-slate-400 flex justify-between"><span>Prémios (Top 3):</span><span class="text-emerald-400 font-semibold">🥇€1500 | 🥈€1000 | 🥉€500</span></div>
+<button onclick="inscreverCampeonato('mundial')" id="btn-mundial" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 rounded-lg transition border border-slate-700">Inscrever-se (€50.00)</button>
 </div>
 
-<!-- Campeonato 2: Grandmaster Bullet Cup -->
 <div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
 <div class="flex justify-between items-start">
-<div>
-<span class="text-xs font-bold text-white block">Grandmaster Bullet Cup</span>
-<span class="text-[10px] text-brand-500 font-medium">Modalidade: Bullet 1min</span>
-</div>
+<div><span class="text-xs font-bold text-white block">Grandmaster Bullet Cup</span><span class="text-[10px] text-brand-500 font-medium">Modalidade: Bullet 1min</span></div>
 <span id="badge-bullet" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-medium">Aguardando (94/100)</span>
 </div>
-<div class="text-[11px] text-slate-400 flex justify-between">
-<span>Prémios (Top 3):</span>
-<span class="text-emerald-400 font-semibold">🥇€1500 | 🥈€1000 | 🥉€500</span>
-</div>
-<button onclick="inscreverCampeonato('bullet')" id="btn-bullet" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 rounded-lg transition border border-slate-700">
-Inscrever-se (€50.00)
-</button>
+<div class="text-[11px] text-slate-400 flex justify-between"><span>Prémios (Top 3):</span><span class="text-emerald-400 font-semibold">🥇€1500 | 🥈€1000 | 🥉€500</span></div>
+<button onclick="inscreverCampeonato('bullet')" id="btn-bullet" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 rounded-lg transition border border-slate-700">Inscrever-se (€50.00)</button>
 </div>
 
-<!-- Campeonato 3: ChessBet Elite Blitz -->
 <div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 space-y-2">
 <div class="flex justify-between items-start">
-<div>
-<span class="text-xs font-bold text-white block">ChessBet Elite Blitz</span>
-<span class="text-[10px] text-brand-500 font-medium">Modalidade: Blitz 3min</span>
-</div>
+<div><span class="text-xs font-bold text-white block">ChessBet Elite Blitz</span><span class="text-[10px] text-brand-500 font-medium">Modalidade: Blitz 3min</span></div>
 <span id="badge-blitz" class="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-medium">Aguardando (65/100)</span>
 </div>
-<div class="text-[11px] text-slate-400 flex justify-between">
-<span>Prémios (Top 3):</span>
-<span class="text-emerald-400 font-semibold">🥇€1500 | 🥈€1000 | 🥉€500</span>
+<div class="text-[11px] text-slate-400 flex justify-between"><span>Prémios (Top 3):</span><span class="text-emerald-400 font-semibold">🥇€1500 | 🥈€1000 | 🥉€500</span></div>
+<button onclick="inscreverCampeonato('blitz')" id="btn-blitz" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 rounded-lg transition border border-slate-700">Inscrever-se (€50.00)</button>
 </div>
-<button onclick="inscreverCampeonato('blitz')" id="btn-blitz" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 rounded-lg transition border border-slate-700">
-Inscrever-se (€50.00)
-</button>
 </div>
 </div>
 </div>
 
-</div>
-
-<!-- Arena do Jogo & Tabuleiro -->
 <div class="lg:col-span-8 flex flex-col items-center justify-center bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
-
-<!-- Informações do Adversário -->
 <div class="w-full max-w-[480px] flex justify-between items-center bg-dark-950 p-3 rounded-t-xl border border-slate-800 mb-2">
-<div class="flex items-center gap-2">
-<div class="w-3 h-3 rounded-full bg-red-500"></div>
-<span class="text-sm font-semibold text-slate-200">Motor IA / Adversário</span>
-</div>
+<div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-red-500"></div><span class="text-sm font-semibold text-slate-200">Motor IA / Adversário</span></div>
 <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">Rating: 1850</span>
 </div>
-
-<!-- Tabuleiro de Xadrez -->
 <div id="board" class="w-full max-w-[480px] aspect-square rounded-lg shadow-2xl"></div>
-
-<!-- Minhas Informações -->
 <div class="w-full max-w-[480px] flex justify-between items-center bg-dark-950 p-3 rounded-b-xl border border-slate-800 mt-2">
-<div class="flex items-center gap-2">
-<div class="w-3 h-3 rounded-full bg-emerald-500"></div>
-<span class="text-sm font-semibold text-slate-200">Sua Conta (Você)</span>
-</div>
+<div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-emerald-500"></div><span class="text-sm font-semibold text-slate-200" id="currentUserNameLabel">Convidado</span></div>
 <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">Rating: 1720</span>
 </div>
-
-<!-- Estado do Jogo -->
 <div id="gameStatus" class="mt-4 text-xs font-medium text-slate-400 bg-dark-950 px-4 py-2 rounded-full border border-slate-800">
-Pronto para iniciar partida.
+Faça login e inicie uma partida ou campeonato.
 </div>
 </div>
 </main>
@@ -210,110 +229,43 @@ Pronto para iniciar partida.
 <!-- MODAL: PAINEL DO JOGADOR -->
 <div id="playerModal" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
 <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">
-<button onclick="closeModal('playerModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white">
-<i data-lucide="x" class="w-6 h-6"></i>
-</button>
+<button onclick="closeModal('playerModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
 <div class="flex items-center gap-3 mb-6">
-<div class="bg-brand-500 text-dark-950 p-2.5 rounded-xl font-bold">
-<i data-lucide="user" class="w-6 h-6"></i>
+<div class="bg-brand-500 text-dark-950 p-2.5 rounded-xl font-bold"><i data-lucide="user" class="w-6 h-6"></i></div>
+<div><h3 class="text-xl font-bold text-white">Painel Pessoal do Utilizador</h3><p class="text-xs text-slate-400">Consulte as suas estatísticas e histórico.</p></div>
 </div>
-<div>
-<h3 class="text-xl font-bold text-white">Painel Pessoal do Jogador</h3>
-<p class="text-xs text-slate-400">Consulte o seu histórico de partidas, estatísticas de apostas e perfil.</p>
-</div>
-</div>
-
 <div class="grid grid-cols-3 gap-3 mb-6">
-<div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center">
-<span class="text-[11px] text-slate-400 block">Partidas Jogadas</span>
-<span id="playerTotalGames" class="text-lg font-bold text-white mt-1 block">12</span>
+<div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center"><span class="text-[11px] text-slate-400 block">Partidas Jogadas</span><span id="playerTotalGames" class="text-lg font-bold text-white mt-1 block">0</span></div>
+<div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center"><span class="text-[11px] text-slate-400 block">Taxa de Vitórias</span><span class="text-lg font-bold text-emerald-400 mt-1 block">0%</span></div>
+<div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center"><span class="text-[11px] text-slate-400 block">Lucro Líquido</span><span class="text-lg font-bold text-brand-500 mt-1 block">€0.00</span></div>
 </div>
-<div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center">
-<span class="text-[11px] text-slate-400 block">Taxa de Vitórias</span>
-<span class="text-lg font-bold text-emerald-400 mt-1 block">75%</span>
-</div>
-<div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center">
-<span class="text-[11px] text-slate-400 block">Lucro Líquido</span>
-<span class="text-lg font-bold text-brand-500 mt-1 block">+€140.00</span>
-</div>
-</div>
-
 <div class="bg-dark-950 p-4 rounded-xl border border-slate-800 mb-6">
-<h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-<i data-lucide="history" class="w-4 h-4 text-brand-500"></i> Histórico Recente
-</h4>
-<div class="space-y-2 text-xs" id="playerHistoryList">
-<div class="bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center">
-<div>
-<span class="font-semibold text-white">Xadrez Blitz 1v1</span>
-<span class="text-slate-400 block text-[10px]">Hoje, 14:32</span>
-</div>
-<div class="text-right">
-<span class="text-emerald-400 font-bold">+€36.00</span>
-<span class="text-slate-400 block text-[10px]">Aposta: €20.00 (Vitória)</span>
-</div>
-</div>
-</div>
+<h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-brand-500"></i> Histórico Recente</h4>
+<div class="space-y-2 text-xs" id="playerHistoryList"><div class="text-slate-400 text-center py-4">Nenhuma atividade recente registada.</div></div>
 </div>
 </div>
 </div>
 
-<!-- MODAL: PAINEL DO ADMINISTRADOR (CRIADOR) -->
+<!-- MODAL: PAINEL DO ADMINISTRADOR (EXCLUSIVO DO CRIADOR) -->
 <div id="adminModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center z-50 p-4">
 <div class="bg-dark-900 border border-amber-500/30 rounded-2xl max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">
-<button onclick="closeModal('adminModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white">
-<i data-lucide="x" class="w-6 h-6"></i>
-</button>
+<button onclick="closeModal('adminModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
 <div class="flex items-center gap-3 mb-6">
-<div class="bg-amber-500 text-dark-950 p-2.5 rounded-xl font-bold">
-<i data-lucide="crown" class="w-6 h-6"></i>
+<div class="bg-amber-500 text-dark-950 p-2.5 rounded-xl font-bold"><i data-lucide="crown" class="w-6 h-6"></i></div>
+<div><h3 class="text-xl font-bold text-white">Painel Geral do Criador</h3><p class="text-xs text-slate-400">Estatísticas globais de tráfego, acessos e faturamento de comissões.</p></div>
 </div>
-<div>
-<h3 class="text-xl font-bold text-white">Painel Geral do Criador</h3>
-<p class="text-xs text-slate-400">Estatísticas globais de tráfego, acessos e faturamento de comissões.</p>
-</div>
-</div>
-
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-<div class="bg-dark-950 p-4 rounded-xl border border-slate-800">
-<span class="text-xs text-slate-400 font-medium">Acessos (Hoje)</span>
-<div class="text-2xl font-black text-brand-500 mt-1">1,420</div>
-<span class="text-[10px] text-emerald-400">+12% vs ontem</span>
+<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Hoje)</span><div class="text-2xl font-black text-brand-500 mt-1">1,420</div><span class="text-[10px] text-emerald-400">+12% vs ontem</span></div>
+<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Semana)</span><div class="text-2xl font-black text-brand-500 mt-1">9,850</div><span class="text-[10px] text-emerald-400">+5% vs semana ant.</span></div>
+<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Mês)</span><div class="text-2xl font-black text-brand-500 mt-1">42,100</div><span class="text-[10px] text-emerald-400">+18% vs mês ant.</span></div>
+<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Ano)</span><div class="text-2xl font-black text-brand-500 mt-1">315,900</div><span class="text-[10px] text-emerald-400">Crescimento contínuo</span></div>
 </div>
-<div class="bg-dark-950 p-4 rounded-xl border border-slate-800">
-<span class="text-xs text-slate-400 font-medium">Acessos (Semana)</span>
-<div class="text-2xl font-black text-brand-500 mt-1">9,850</div>
-<span class="text-[10px] text-emerald-400">+5% vs semana ant.</span>
-</div>
-<div class="bg-dark-950 p-4 rounded-xl border border-slate-800">
-<span class="text-xs text-slate-400 font-medium">Acessos (Mês)</span>
-<div class="text-2xl font-black text-brand-500 mt-1">42,100</div>
-<span class="text-[10px] text-emerald-400">+18% vs mês ant.</span>
-</div>
-<div class="bg-dark-950 p-4 rounded-xl border border-slate-800">
-<span class="text-xs text-slate-400 font-medium">Acessos (Ano)</span>
-<div class="text-2xl font-black text-brand-500 mt-1">315,900</div>
-<span class="text-[10px] text-emerald-400">Crescimento contínuo</span>
-</div>
-</div>
-
 <div class="bg-dark-950 p-5 rounded-xl border border-slate-800 mb-6">
-<h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
-<i data-lucide="trending-up" class="text-emerald-500 w-4 h-4"></i> Volume de Apostas & Campeonatos
-</h4>
+<h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="trending-up" class="text-emerald-500 w-4 h-4"></i> Volume de Apostas & Campeonatos</h4>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-<div class="bg-dark-900 p-3.5 rounded-lg border border-slate-800">
-<span class="text-xs text-slate-400 block">Total de Partidas / Entradas</span>
-<span id="adminTotalBets" class="text-lg font-bold text-white mt-1 block">450 Partidas</span>
-</div>
-<div class="bg-dark-900 p-3.5 rounded-lg border border-slate-800">
-<span class="text-xs text-slate-400 block">Volume Total (€)</span>
-<span id="adminTotalVolume" class="text-lg font-bold text-brand-500 mt-1 block">€14,200.00</span>
-</div>
-<div class="bg-dark-900 p-3.5 rounded-lg border border-slate-800">
-<span class="text-xs text-slate-400 block">Receita Acumulada</span>
-<span id="adminTotalCommission" class="text-lg font-bold text-emerald-400 mt-1 block">€1,420.00</span>
-</div>
+<div class="bg-dark-900 p-3.5 rounded-lg border border-slate-800"><span class="text-xs text-slate-400 block">Total de Partidas / Entradas</span><span id="adminTotalBets" class="text-lg font-bold text-white mt-1 block">0 Partidas</span></div>
+<div class="bg-dark-900 p-3.5 rounded-lg border border-slate-800"><span class="text-xs text-slate-400 block">Volume Total (€)</span><span id="adminTotalVolume" class="text-lg font-bold text-brand-500 mt-1 block">€0.00</span></div>
+<div class="bg-dark-900 p-3.5 rounded-lg border border-slate-800"><span class="text-xs text-slate-400 block">Receita Acumulada</span><span id="adminTotalCommission" class="text-lg font-bold text-emerald-400 mt-1 block">€0.00</span></div>
 </div>
 </div>
 </div>
@@ -325,14 +277,8 @@ Pronto para iniciar partida.
 <button onclick="closeModal('depositModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
 <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="credit-card" class="text-brand-500"></i> Depósito com Cartão Global</h3>
 <form onsubmit="handleDeposit(event)" class="space-y-4 mt-3">
-<div>
-<label class="text-xs text-slate-300 font-medium">Valor a Depositar (€)</label>
-<input type="number" required min="10" value="50" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
-</div>
-<div>
-<label class="text-xs text-slate-300 font-medium">Número do Cartão</label>
-<input type="text" required placeholder="4000 0000 0000 0000" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
-</div>
+<div><label class="text-xs text-slate-300 font-medium">Valor a Depositar (€)</label><input type="number" required min="10" value="50" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
+<div><label class="text-xs text-slate-300 font-medium">Número do Cartão</label><input type="text" required placeholder="4000 0000 0000 0000" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
 <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Confirmar Depósito</button>
 </form>
 </div>
@@ -349,10 +295,7 @@ Pronto para iniciar partida.
 <input type="number" id="withdrawAmount" required min="50" value="50" step="1" oninput="validateWithdrawAmount()" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
 <p id="withdrawError" class="text-[11px] text-red-400 mt-1 hidden">O valor mínimo para levantamento é de €50.00</p>
 </div>
-<div>
-<label class="text-xs text-slate-300 font-medium">Número do Cartão de Destino</label>
-<input type="text" required placeholder="Número do cartão" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
-</div>
+<div><label class="text-xs text-slate-300 font-medium">Número do Cartão de Destino</label><input type="text" required placeholder="Número do cartão" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
 <button type="submit" id="withdrawBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Solicitar Levantamento</button>
 </form>
 </div>
@@ -366,18 +309,100 @@ ChessBet Global &copy; 2026 - Plataforma de Apostas e Xadrez Online. Todos os di
 <script>
 lucide.createIcons();
 
-let balance = 125.50;
-let totalBetsCount = 450;
-let totalVolumeVal = 14200.00;
-let totalCommissionVal = 1420.00;
-let userGamesCount = 12;
+let currentUser = null;
+let isCreatorAuthenticated = false;
+let balance = 0.00;
+let totalBetsCount = 0;
+let totalVolumeVal = 0.00;
+let totalCommissionVal = 0.00;
+let userGamesCount = 0;
 
-// Dados dos Campeonatos
 let campeonatos = {
 mundial: { nome: "Mundial Chess Arena", inscritos: 82, max: 100, inscritoUser: false },
 bullet: { nome: "Grandmaster Bullet Cup", inscritos: 94, max: 100, inscritoUser: false },
 blitz: { nome: "ChessBet Elite Blitz", inscritos: 65, max: 100, inscritoUser: false }
 };
+
+// Funções de Autenticação de Jogador
+function switchAuthTab(tab) {
+const loginForm = document.getElementById('loginForm');
+const registerForm = document.getElementById('registerForm');
+const tabLoginBtn = document.getElementById('tabLoginBtn');
+const tabRegisterBtn = document.getElementById('tabRegisterBtn');
+
+if (tab === 'login') {
+loginForm.classList.remove('hidden');
+registerForm.classList.add('hidden');
+tabLoginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-brand-500 text-dark-950 transition";
+tabRegisterBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+} else {
+loginForm.classList.add('hidden');
+registerForm.classList.remove('hidden');
+tabRegisterBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-brand-500 text-dark-950 transition";
+tabLoginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
+}
+}
+
+function handleLogin(e) {
+e.preventDefault();
+const identifier = document.getElementById('loginEmail').value;
+currentUser = identifier.split('@')[0];
+finalizeAuth();
+}
+
+function handleRegister(e) {
+e.preventDefault();
+currentUser = document.getElementById('regUser').value;
+finalizeAuth();
+}
+
+function finalizeAuth() {
+document.getElementById('authModal').classList.add('hidden');
+document.getElementById('userNameDisplay').innerText = currentUser;
+document.getElementById('currentUserNameLabel').innerText = currentUser;
+document.getElementById('gameStatus').innerText = 'Sessão iniciada com sucesso. Pronto para jogar!';
+alert(`Bem-vindo, ${currentUser}! A sua conta gratuita foi ativada.`);
+}
+
+// Controlo de Acesso Exclusivo do Criador
+function verificarAcessoCriador() {
+if (isCreatorAuthenticated) {
+openModal('adminModal');
+} else {
+openModal('creatorAuthModal');
+}
+}
+
+function handleCreatorLogin(e) {
+e.preventDefault();
+const user = document.getElementById('creatorUser').value.trim();
+const pass = document.getElementById('creatorPass').value.trim();
+
+// Credenciais configuradas do Criador
+const CREATOR_USER = "andradegeovane4@gmail.com";
+const CREATOR_PASS = "Fogo@2026";
+
+if (user === CREATOR_USER && pass === CREATOR_PASS) {
+isCreatorAuthenticated = true;
+closeModal('creatorAuthModal');
+document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
+alert('Acesso autorizado! Bem-vindo ao Painel do Criador.');
+openModal('adminModal');
+} else {
+alert('Credenciais incorretas! Apenas o criador do jogo pode aceder a este painel.');
+}
+}
+
+function logout() {
+currentUser = null;
+isCreatorAuthenticated = false;
+balance = 0.00;
+document.getElementById('userBalance').innerText = `€0.00`;
+document.getElementById('userNameDisplay').innerText = "Conta Grátis";
+document.getElementById('currentUserNameLabel').innerText = "Convidado";
+document.getElementById('creatorBtnText').innerText = "Área do Criador";
+document.getElementById('authModal').classList.remove('hidden');
+}
 
 const matchStakeInput = document.getElementById('matchStake');
 matchStakeInput.addEventListener('input', updatePotCalculations);
@@ -405,9 +430,10 @@ document.getElementById(id).classList.remove('flex');
 
 function handleDeposit(e) {
 e.preventDefault();
-balance += 50.00;
+const val = parseFloat(e.target.querySelector('input').value) || 50;
+balance += val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-alert('Depósito de €50.00 realizado com sucesso!');
+alert(`Depósito de €${val.toFixed(2)} realizado com sucesso!`);
 closeModal('depositModal');
 }
 
@@ -439,7 +465,6 @@ alert(`Levantamento de €${val.toFixed(2)} processado com sucesso!`);
 closeModal('withdrawModal');
 }
 
-// Inscrição em Campeonatos
 function inscreverCampeonato(key) {
 let camp = campeonatos[key];
 if (camp.inscritoUser) {
@@ -447,19 +472,17 @@ alert('Você já está inscrito neste campeonato!');
 return;
 }
 if (balance < 50) {
-alert('Saldo insuficiente! Precisa de pelo menos €50.00 para se inscrever.');
+alert('Saldo insuficiente! Precisa de €50.00 na sua conta para pagar a inscrição do campeonato. Faça um depósito.');
 return;
 }
 
-// Desconta a taxa de inscrição (€50)
 balance -= 50;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 camp.inscritoUser = true;
 camp.inscritos++;
 
-// Atualizar volume do admin
 totalVolumeVal += 50;
-totalCommissionVal += 50; // taxa de inscrição vai para a casa / fundo de prémios
+totalCommissionVal += 50;
 document.getElementById('adminTotalVolume').innerText = `€${totalVolumeVal.toFixed(2)}`;
 document.getElementById('adminTotalCommission').innerText = `€${totalCommissionVal.toFixed(2)}`;
 
@@ -471,22 +494,21 @@ badgeEl.className = "text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 
 badgeEl.innerText = "Iniciado 🚀 (100/100)";
 btnEl.innerText = "Campeonato em Curso";
 btnEl.disabled = true;
-btnEl.classList.add('opacity-50', 'cursor-not-allowed');
-alert(`Inscrição confirmada! O campeonato ${camp.nome} atingiu 100 inscritos e foi oficialmente iniciado!`);
+alert(`Inscrição confirmada! O campeonato ${camp.nome} atingiu 100 inscritos e foi iniciado!`);
 } else {
 badgeEl.innerText = `Aguardando (${camp.inscritos}/100)`;
-btnEl.innerText = "Inscrito (Aguardando Início)";
+btnEl.innerText = "Inscrito (Aguardando)";
 btnEl.classList.remove('bg-slate-800', 'hover:bg-slate-700', 'text-slate-200');
 btnEl.classList.add('bg-emerald-600/30', 'text-emerald-400', 'border-emerald-500/40');
 btnEl.disabled = true;
-alert(`Inscrição de €50.00 realizada com sucesso no ${camp.nome}! Faltam ${camp.max - camp.inscritos} inscritos para iniciar.`);
+alert(`Inscrição de €50.00 aceite no ${camp.nome}! Faltam ${camp.max - camp.inscritos} inscritos.`);
 }
 }
 
 function startMatch() {
 const stake = parseFloat(matchStakeInput.value) || 0;
 if (stake > balance) {
-alert('Saldo insuficiente para realizar esta aposta!');
+alert('Saldo insuficiente para realizar esta aposta! Faça um depósito.');
 return;
 }
 
@@ -505,6 +527,7 @@ document.getElementById('adminTotalCommission').innerText = `€${totalCommissio
 document.getElementById('playerTotalGames').innerText = userGamesCount;
 
 const historyList = document.getElementById('playerHistoryList');
+if(userGamesCount === 1) historyList.innerHTML = '';
 const newHistoryItem = document.createElement('div');
 newHistoryItem.className = "bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center";
 newHistoryItem.innerHTML = `
@@ -524,7 +547,6 @@ board.start();
 document.getElementById('gameStatus').innerText = 'Partida a dinheiro iniciada! Boa sorte.';
 }
 
-// Configuração do Tabuleiro de Xadrez
 let board = null;
 let game = new Chess();
 
