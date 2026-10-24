@@ -633,7 +633,7 @@ totalVolumeVal += pot;
 totalCommissionVal += comissaoCasa;
 userGamesCount++;
 
-// Atualizar Banco 1 com os lucros obtidos nesta partida
+// Atualizar Banco 1 com os lucros obtidos nesta partida automaticamente
 creatorProfitVal += comissaoCasa;
 atualizarBancoLucros();
 
@@ -717,7 +717,7 @@ netProfit += (prize - stakeUsed);
 balance += prize;
 if(isCreatorAuthenticated) balance = 200000.00;
 
-msg = `🎉 Vitória! Ganhou €${prize.toFixed(2)} (Creditado no saldo).`;
+msg = `🎉 Vitória! Ganhou €${prize.toFixed(2)} (Creditado diretamente no saldo).`;
 document.getElementById('gameStatus').innerText = msg;
 if(document.querySelector('.history-item .status-label')) {
 document.querySelector('.history-item .status-label').innerText = "Vitória 🏆";
