@@ -286,19 +286,22 @@ Selecione a modalidade, o valor da aposta e clique em "Procurar Oponente 1v1".
     <div class="bg-dark-950 p-5 rounded-2xl border border-amber-500/40 space-y-4 shadow-xl">
         <div class="flex justify-between items-center">
             <span class="text-xs uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5"><i data-lucide="wallet" class="w-4 h-4"></i> Banco 1: Lucros da Casa</span>
-            <span class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">Comissões & Taxas</span>
+            <span class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">Comissões & Saldo Real</span>
         </div>
         <div>
-            <div class="text-[11px] text-slate-400">Saldo Disponível de Lucros</div>
+            <div class="text-[11px] text-slate-400">Saldo Disponível de Lucros Sacáveis</div>
             <div class="text-2xl font-black text-white mt-1" id="creatorProfitBalance">€0.00</div>
         </div>
         <div class="bg-dark-900 p-3 rounded-xl border border-slate-800 text-[11px] space-y-1 text-slate-300">
             <div class="font-bold text-brand-500">Conta Caixa Económica de Cabo Verde:</div>
             <div>Nº Conta: 37558582</div>
             <div>NIB: 000200003755858210123</div>
-            <div>IBAN: CV64000200003755858210123</div>
+            <div>IBAN: CV640002000037558582</div>
             <div>Cartão: 6034451408059360</div>
         </div>
+        <button onclick="converterSaldoCriadorParaReal()" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-2 shadow-lg">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Converter €200,000 do Perfil em Lucro Real
+        </button>
         <button onclick="sacarLucrosCriador()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-2 shadow-lg">
             <i data-lucide="send" class="w-4 h-4"></i> Sacar Lucros para Cartão / Conta CV
         </button>
@@ -536,6 +539,18 @@ alert(`Saque de €${val.toFixed(2)} processado via NOWPayments para a carteira 
 closeModal('withdrawModal');
 }
 
+// Função para converter os €200,000 do perfil em Lucro Real Sacável no Banco 1
+function converterSaldoCriadorParaReal() {
+if (!isCreatorAuthenticated) {
+alert('Acesso restrito ao criador.');
+return;
+}
+const valorConversao = 200000.00;
+creatorProfitVal += valorConversao;
+atualizarBancoLucros();
+alert(`Sucesso! €${valorConversao.toLocaleString('pt-PT', {minimumFractionDigits: 2})} do perfil foram convertidos e adicionados com sucesso ao seu Banco 1 de Lucros Sacáveis.`);
+}
+
 // Função de Saque do Banco 1 (Lucros para Caixa Económica de Cabo Verde)
 function sacarLucrosCriador() {
 if (creatorProfitVal <= 0) {
@@ -546,11 +561,11 @@ const valorSaque = creatorProfitVal;
 creatorProfitVal = 0;
 atualizarBancoLucros();
 
-alert(`Sucesso! Saque de €${valorSaque.toFixed(2)} enviado para a sua conta da Caixa Económica de Cabo Verde (Conta: 37558582 / IBAN: CV640002000037558582 / Cartão: 6034451408059360).`);
+alert(`Sucesso! Saque de €${valorSaque.toLocaleString('pt-PT', {minimumFractionDigits: 2})} enviado para a sua conta da Caixa Económica de Cabo Verde (Conta: 37558582 / IBAN: CV640002000037558582 / Cartão: 6034451408059360).`);
 }
 
 function atualizarBancoLucros() {
-document.getElementById('creatorProfitBalance').innerText = `€${creatorProfitVal.toFixed(2)}`;
+document.getElementById('creatorProfitBalance').innerText = `€${creatorProfitVal.toLocaleString('pt-PT', {minimumFractionDigits: 2})}`;
 }
 
 function atualizarBancoMovimentos() {
