@@ -31,6 +31,27 @@ dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
 </head>
 <body class="bg-dark-950 text-slate-100 min-h-screen font-sans flex flex-col justify-between">
 
+<!-- MODAL DE NOTIFICAÇÃO DE FIM DE PARTIDA (POP-UP FLUTUANTE) -->
+<div id="gameOverModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+<div class="bg-dark-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl relative animate-bounce-short">
+<div id="gameOverIconBg" class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold bg-brand-500/20 text-brand-500">
+<i data-lucide="trophy" class="w-8 h-8"></i>
+</div>
+<div class="space-y-1">
+<h3 id="gameOverTitle" class="text-xl font-bold text-white">Fim de Partida</h3>
+<p id="gameOverDesc" class="text-xs text-slate-300">O resultado da partida foi registado e o saldo atualizado.</p>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-2">
+<button onclick="fazerRematch()" class="bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-1 shadow-lg">
+<i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Rematch
+</button>
+<button onclick="fecharNotificacaoFimJogo()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-1">
+<i data-lucide="search" class="w-3.5 h-3.5"></i> Novo Jogo
+</button>
+</div>
+</div>
+</div>
+
 <!-- MODAL DE LOGIN / REGISTO DE JOGADORES -->
 <div id="authModal" class="fixed inset-0 bg-dark-950/95 backdrop-blur-xl flex items-center justify-center z-50 p-4">
 <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-8 shadow-2xl space-y-6">
@@ -87,7 +108,7 @@ Criar Conta Gratuita
 <div class="w-16 h-16 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
 <div class="space-y-2">
 <h3 class="text-lg font-bold text-white">Procurando Oponente...</h3>
-<p class="text-xs text-slate-400">A procurar jogadores com a mesma aposta (<span id="searchStakeText" class="text-brand-500 font-bold">€10.00</span>) na modalidade <span id="searchModeText" class="text-white font-semibold">Rápido 10min</span>.</p>
+<p class="text-xs text-slate-400">A procurar jogadores com a mesma aposta (<span id="searchStakeText" class="text-brand-500 font-bold">€10.00</span>) na modalidade <span id="searchModeText" class="text-white font-semibold">Blitz</span>.</p>
 </div>
 <div class="bg-dark-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-300 flex justify-between">
 <span>Tempo decorrido:</span>
@@ -170,7 +191,6 @@ Autenticar como Criador
 <main class="max-w-7xl mx-auto px-4 py-6 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
 
 <div class="lg:col-span-4 space-y-6">
-<!-- Seleção de Modalidades & Apostas 1v1 -->
 <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
 <h2 class="text-base font-bold text-white flex items-center gap-2">
 <i data-lucide="trophy" class="text-brand-500 w-5 h-5"></i> Desafio Head-to-Head (1v1)
@@ -218,7 +238,7 @@ Autenticar como Criador
 </div>
 </div>
 
-<!-- Arena do Jogo & Tabuleiro & Relógio -->
+<!-- Arena do Jogo & Tabuleiro & Relógio & Painel de Controlos Direto -->
 <div class="lg:col-span-8 flex flex-col items-center justify-center bg-dark-900 border border-slate-800 rounded-2xl p-6 shadow-2xl">
 <!-- Relógio do Oponente -->
 <div class="w-full max-w-[480px] flex justify-between items-center bg-dark-950 p-3 rounded-t-xl border border-slate-800 mb-2">
@@ -233,6 +253,22 @@ Autenticar como Criador
 <div class="w-full max-w-[480px] flex justify-between items-center bg-dark-950 p-3 rounded-b-xl border border-slate-800 mt-2">
 <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-emerald-500"></div><span class="text-sm font-semibold text-slate-200" id="currentUserNameLabel">Convidado</span></div>
 <span class="text-sm font-mono font-bold text-emerald-400 bg-dark-900 px-3 py-1 rounded border border-slate-800" id="timerPlayer">10:00</span>
+</div>
+
+<!-- PAINEL DE CONTROLOS NO TABULEIRO (Desistir, Abortar, Rematch, Novo Jogo) -->
+<div class="w-full max-w-[480px] mt-3 grid grid-cols-4 gap-2">
+<button onclick="fimDePartida('resignation')" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1" title="Desistir da Partida">
+<i data-lucide="flag" class="w-3.5 h-3.5"></i> Desistir
+</button>
+<button onclick="fimDePartida('abort')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded-xl transition border border-slate-700 flex items-center justify-center gap-1" title="Abortar Partida">
+<i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Abortar
+</button>
+<button onclick="fazerRematch()" class="bg-brand-500/20 hover:bg-brand-500/45 text-brand-400 border border-brand-500/30 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1" title="Jogar Novamente com a mesma aposta">
+<i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Rematch
+</button>
+<button onclick="iniciarBuscaOponente()" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1" title="Procurar Novo Jogo">
+<i data-lucide="search" class="w-3.5 h-3.5"></i> Novo Jogo
+</button>
 </div>
 
 <div id="gameStatus" class="mt-4 text-xs font-medium text-slate-400 bg-dark-950 px-4 py-2 rounded-full border border-slate-800">
@@ -252,7 +288,7 @@ Selecione a modalidade, o valor da aposta e clique em "Procurar Oponente 1v1".
 <div class="grid grid-cols-3 gap-3 mb-6">
 <div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center"><span class="text-[11px] text-slate-400 block">Partidas Jogadas</span><span id="playerTotalGames" class="text-lg font-bold text-white mt-1 block">0</span></div>
 <div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center"><span class="text-[11px] text-slate-400 block">Taxa de Vitórias</span><span class="text-lg font-bold text-emerald-400 mt-1 block">0%</span></div>
-<div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center"><span class="text-[11px] text-slate-400 block">Lucro Líquido</span><span class="text-lg font-bold text-brand-500 mt-1 block">€0.00</span></div>
+<div class="bg-dark-950 p-3.5 rounded-xl border border-slate-800 text-center"><span class="text-[11px] text-slate-400 block">Lucro Líquido</span><span id="playerNetProfit" class="text-lg font-bold text-brand-500 mt-1 block">€0.00</span></div>
 </div>
 <div class="bg-dark-950 p-4 rounded-xl border border-slate-800 mb-6">
 <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><i data-lucide="history" class="w-4 h-4 text-brand-500"></i> Histórico Recente</h4>
@@ -291,314 +327,4 @@ Selecione a modalidade, o valor da aposta e clique em "Procurar Oponente 1v1".
 <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
 <button onclick="closeModal('depositModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
 <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="credit-card" class="text-brand-500"></i> Depósito com Cartão Global</h3>
-<form onsubmit="handleDeposit(event)" class="space-y-4">
-<div><label class="text-xs text-slate-300 font-medium">Valor a Depositar (€)</label><input type="number" id="depositAmount" required min="1" step="any" value="50" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
-<div><label class="text-xs text-slate-300 font-medium">Número do Cartão</label><input type="text" required placeholder="4000 0000 0000 0000" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
-<button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Confirmar Depósito</button>
-</form>
-</div>
-</div>
-
-<!-- MODAL DE SAQUE -->
-<div id="withdrawModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-<div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
-<button onclick="closeModal('withdrawModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
-<h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="arrow-up-right" class="text-emerald-500"></i> Levantamento para Cartão</h3>
-<form onsubmit="handleWithdraw(event)" class="space-y-4">
-<div><label class="text-xs text-slate-300 font-medium">Montante a Sacar (€)</label><input type="number" id="withdrawAmount" required min="0.01" step="any" value="20" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
-<div><label class="text-xs text-slate-300 font-medium">Número do Cartão de Destino</label><input type="text" required placeholder="Número do cartão" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
-<button type="submit" id="withdrawBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Solicitar Levantamento</button>
-</form>
-</div>
-</div>
-
-<!-- Footer -->
-<footer class="border-t border-slate-800 bg-dark-900 py-4 text-center text-xs text-slate-500">
-ChessBet Global &copy; 2026 - Plataforma de Apostas e Xadrez Online. Todos os direitos reservados.
-</footer>
-
-<script>
-lucide.createIcons();
-
-let currentUser = null;
-let isCreatorAuthenticated = false;
-let balance = 0.00;
-let totalBetsCount = 0;
-let totalVolumeVal = 0.00;
-let totalCommissionVal = 0.00;
-let userGamesCount = 0;
-let matchmakingInterval = null;
-let gameTimerInterval = null;
-let playerTime = 600;
-let opponentTime = 600;
-
-let campeonatos = {
-mundial: { nome: "Mundial Chess Arena", inscritos: 82, max: 100, inscritoUser: false }
-};
-
-function switchAuthTab(tab) {
-const loginForm = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-const tabLoginBtn = document.getElementById('tabLoginBtn');
-const tabRegisterBtn = document.getElementById('tabRegisterBtn');
-
-if (tab === 'login') {
-loginForm.classList.remove('hidden');
-registerForm.classList.add('hidden');
-tabLoginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-brand-500 text-dark-950 transition";
-tabRegisterBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
-} else {
-loginForm.classList.add('hidden');
-registerForm.classList.remove('hidden');
-tabRegisterBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-brand-500 text-dark-950 transition";
-tabLoginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
-}
-}
-
-function handleLogin(e) {
-e.preventDefault();
-currentUser = document.getElementById('loginEmail').value.split('@')[0];
-balance = 0.00;
-finalizeAuth();
-}
-
-function handleRegister(e) {
-e.preventDefault();
-currentUser = document.getElementById('regUser').value;
-balance = 0.00;
-finalizeAuth();
-}
-
-function finalizeAuth() {
-document.getElementById('authModal').classList.add('hidden');
-document.getElementById('userNameDisplay').innerText = currentUser;
-document.getElementById('currentUserNameLabel').innerText = currentUser;
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-}
-
-function verificarAcessoCriador() {
-if (isCreatorAuthenticated) {
-openModal('adminModal');
-} else {
-openModal('creatorAuthModal');
-}
-}
-
-function handleCreatorLogin(e) {
-e.preventDefault();
-const user = document.getElementById('creatorUser').value.trim();
-const pass = document.getElementById('creatorPass').value.trim();
-
-if (user === "andradegeovane4@gmail.com" && pass === "Fogo@2026") {
-isCreatorAuthenticated = true;
-currentUser = "Criador (Admin)";
-balance = 200000.00;
-closeModal('creatorAuthModal');
-document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
-document.getElementById('userNameDisplay').innerText = currentUser;
-document.getElementById('currentUserNameLabel').innerText = currentUser;
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-alert('Acesso autorizado! Saldo permanente de €200,000.00 carregado.');
-openModal('adminModal');
-} else {
-alert('Credenciais incorretas!');
-}
-}
-
-function logout() {
-currentUser = null;
-isCreatorAuthenticated = false;
-balance = 0.00;
-document.getElementById('userBalance').innerText = `€0.00`;
-document.getElementById('userNameDisplay').innerText = "Conta Grátis";
-document.getElementById('currentUserNameLabel').innerText = "Convidado";
-document.getElementById('creatorBtnText').innerText = "Área do Criador";
-document.getElementById('authModal').classList.remove('hidden');
-}
-
-const matchStakeInput = document.getElementById('matchStake');
-matchStakeInput.addEventListener('input', updatePotCalculations);
-
-function updatePotCalculations() {
-const stake = parseFloat(matchStakeInput.value) || 0;
-const totalPot = stake * 2;
-const platformFee = totalPot * 0.10;
-const winnerPayout = totalPot - platformFee;
-
-document.getElementById('calcTotalPot').innerText = `€${totalPot.toFixed(2)}`;
-document.getElementById('calcPlatformFee').innerText = `€${platformFee.toFixed(2)}`;
-document.getElementById('calcWinnerPayout').innerText = `€${winnerPayout.toFixed(2)}`;
-}
-updatePotCalculations();
-
-function openModal(id) {
-document.getElementById(id).classList.remove('hidden');
-document.getElementById(id).classList.add('flex');
-}
-function closeModal(id) {
-document.getElementById(id).classList.add('hidden');
-document.getElementById(id).classList.remove('flex');
-}
-
-function handleDeposit(e) {
-e.preventDefault();
-const val = parseFloat(document.getElementById('depositAmount').value) || 0;
-if (val <= 0) return;
-balance += val;
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-alert(`Depósito de €${val.toFixed(2)} realizado com sucesso!`);
-closeModal('depositModal');
-}
-
-function handleWithdraw(e) {
-e.preventDefault();
-const val = parseFloat(document.getElementById('withdrawAmount').value) || 0;
-if (val <= 0 || val > balance) {
-alert('Valor inválido ou saldo insuficiente.');
-return;
-}
-balance -= val;
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-alert(`Levantamento de €${val.toFixed(2)} processado com sucesso!`);
-closeModal('withdrawModal');
-}
-
-// SISTEMA DE MATCHMAKING (BUSCA DE OPONENTE)
-function iniciarBuscaOponente() {
-const stake = parseFloat(matchStakeInput.value) || 0;
-const mode = document.getElementById('gameModeSelect').value;
-
-if (stake <= 0) {
-alert('Insira um valor de aposta válido.');
-return;
-}
-if (!isCreatorAuthenticated && stake > balance) {
-alert('Saldo insuficiente para realizar esta aposta! Faça um depósito.');
-return;
-}
-
-document.getElementById('searchStakeText').innerText = `€${stake.toFixed(2)}`;
-document.getElementById('searchModeText').innerText = mode;
-openModal('matchmakingModal');
-
-let seconds = 0;
-document.getElementById('searchTimer').innerText = "00:00";
-clearInterval(matchmakingInterval);
-matchmakingInterval = setInterval(() => {
-seconds++;
-let min = String(Math.floor(seconds / 60)).padStart(2, '0');
-let sec = String(seconds % 60).padStart(2, '0');
-document.getElementById('searchTimer').innerText = `${min}:${sec}`;
-
-if (seconds >= 3) {
-clearInterval(matchmakingInterval);
-closeModal('matchmakingModal');
-iniciarPartidaReal(stake, mode);
-}
-}, 1000);
-}
-
-function cancelMatchmaking() {
-clearInterval(matchmakingInterval);
-closeModal('matchmakingModal');
-}
-
-function iniciarPartidaReal(stake, mode) {
-balance -= stake;
-if(isCreatorAuthenticated) balance = 200000.00;
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-
-totalBetsCount++;
-const pot = stake * 2;
-totalVolumeVal += pot;
-totalCommissionVal += (pot * 0.10);
-userGamesCount++;
-
-document.getElementById('adminTotalBets').innerText = `${totalBetsCount} Partidas`;
-document.getElementById('adminTotalVolume').innerText = `€${totalVolumeVal.toFixed(2)}`;
-document.getElementById('adminTotalCommission').innerText = `€${totalCommissionVal.toFixed(2)}`;
-document.getElementById('playerTotalGames').innerText = userGamesCount;
-
-// Definir tempo consoante modalidade escolhida
-if (mode === 'Bullet') { playerTime = 60; opponentTime = 60; }
-else if (mode === 'Blitz') { playerTime = 180; opponentTime = 180; }
-else if (mode === 'Rápido 10min') { playerTime = 600; opponentTime = 600; }
-else { playerTime = 1800; opponentTime = 1800; }
-
-iniciarRelogiosJogo();
-
-const oponentesAleatorios = ["Grandmaster_X", "ChessShark99", "MagnusFan_2026", "BlitzKing", "TacticalQueen"];
-const opEscolhido = oponentesAleatorios[Math.floor(Math.random() * oponentesAleatorios.length)];
-document.getElementById('opponentNameLabel').innerText = `Adversário: ${opEscolhido} (Rating: 1840)`;
-
-const historyList = document.getElementById('playerHistoryList');
-if(userGamesCount === 1) historyList.innerHTML = '';
-const newHistoryItem = document.createElement('div');
-newHistoryItem.className = "bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center";
-newHistoryItem.innerHTML = `
-<div>
-<span class="font-semibold text-white">Xadrez ${mode} vs ${opEscolhido}</span>
-<span class="text-slate-400 block text-[10px]">Agora mesmo</span>
-</div>
-<div class="text-right">
-<span class="text-brand-500 font-bold">€${stake.toFixed(2)} Em Jogo</span>
-<span class="text-slate-400 block text-[10px]">Partida em Andamento</span>
-</div>
-`;
-historyList.prepend(newHistoryItem);
-
-game.reset();
-board.position('start');
-document.getElementById('gameStatus').innerText = `Partida de Xadrez ${mode} iniciada contra ${opEscolhido}! Boa sorte.`;
-}
-
-function iniciarRelogiosJogo() {
-clearInterval(gameTimerInterval);
-gameTimerInterval = setInterval(() => {
-if (playerTime > 0) playerTime--;
-if (opponentTime > 0) opponentTime--;
-
-let pMin = String(Math.floor(playerTime / 60)).padStart(2, '0');
-let pSec = String(playerTime % 60).padStart(2, '0');
-document.getElementById('timerPlayer').innerText = `${pMin}:${pSec}`;
-
-let oMin = String(Math.floor(opponentTime / 60)).padStart(2, '0');
-let oSec = String(opponentTime % 60).padStart(2, '0');
-document.getElementById('timerOpponent').innerText = `${oMin}:${oSec}`;
-}, 1000);
-}
-
-let board = null;
-let game = null;
-
-$(document).ready(function() {
-    game = new Chess();
-    board = Chessboard('board', {
-        draggable: true,
-        position: 'start',
-        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-        onDrop: onDrop,
-        onSnapEnd: onSnapEnd
-    });
-});
-
-function makeRandomMove() {
-    const possibleMoves = game.moves();
-    if (possibleMoves.length === 0) return;
-    const randomIdx = Math.floor(Math.random() * possibleMoves.length);
-    game.move(possibleMoves[randomIdx]);
-    board.position(game.fen());
-}
-
-function onDrop(source, target) {
-    const move = game.move({ from: source, to: target, promotion: 'q' });
-    if (move === null) return 'snapback';
-    window.setTimeout(makeRandomMove, 250);
-}
-
-function onSnapEnd() {
-    board.position(game.fen());
-}
-</script>
-</body>
-</html>
+<form on
