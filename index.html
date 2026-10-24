@@ -31,27 +31,6 @@ dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
 </head>
 <body class="bg-dark-950 text-slate-100 min-h-screen font-sans flex flex-col justify-between">
 
-<!-- MODAL DE NOTIFICAÇÃO DE FIM DE PARTIDA (POP-UP FLUTUANTE) -->
-<div id="gameOverModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center z-50 p-4">
-<div class="bg-dark-900 border border-slate-700 rounded-2xl max-w-sm w-full p-6 text-center space-y-5 shadow-2xl relative">
-<div id="gameOverIconBg" class="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-2xl font-bold bg-brand-500/20 text-brand-500">
-<i data-lucide="trophy" class="w-8 h-8"></i>
-</div>
-<div class="space-y-1">
-<h3 id="gameOverTitle" class="text-xl font-bold text-white">Fim de Partida</h3>
-<p id="gameOverDesc" class="text-xs text-slate-300">O resultado da partida foi registado e o saldo atualizado.</p>
-</div>
-<div class="grid grid-cols-2 gap-2 pt-2">
-<button onclick="fazerRematch()" class="bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-1 shadow-lg">
-<i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Rematch
-</button>
-<button onclick="fecharNotificacaoFimJogo()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-1">
-<i data-lucide="search" class="w-3.5 h-3.5"></i> Novo Jogo
-</button>
-</div>
-</div>
-</div>
-
 <!-- MODAL DE LOGIN / REGISTO DE JOGADORES -->
 <div id="authModal" class="fixed inset-0 bg-dark-950/95 backdrop-blur-xl flex items-center justify-center z-50 p-4">
 <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-8 shadow-2xl space-y-6">
@@ -60,7 +39,7 @@ dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
 <i data-lucide="swords" class="w-8 h-8"></i> CHESSBET
 </div>
 <h2 class="text-xl font-bold text-white mt-2">Bem-vindo à Plataforma</h2>
-<p class="text-xs text-slate-400">Acesso gratuito ao portal. Insira a sua conta ou crie uma grátis.</p>
+<p class="text-xs text-slate-400">Acesso gratuito ao portal. Só paga quando decidir apostar ou entrar em campeonatos.</p>
 </div>
 
 <div class="flex bg-dark-950 p-1 rounded-xl border border-slate-800">
@@ -71,7 +50,7 @@ dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
 <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
 <div>
 <label class="text-xs text-slate-300 font-medium">Email ou Utilizador</label>
-<input type="text" id="loginEmail" required placeholder="andradegeovane4@gmail.com" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-brand-500">
+<input type="text" id="loginEmail" required placeholder="ex: mestre@chess.com" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-brand-500">
 </div>
 <div>
 <label class="text-xs text-slate-300 font-medium">Palavra-passe</label>
@@ -224,6 +203,17 @@ Autenticar como Criador
 </button>
 </div>
 
+<!-- Controlos de Término de Partida -->
+<div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-3">
+<h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Controlos da Partida Ativa</h3>
+<div class="grid grid-cols-2 gap-2">
+<button onclick="fimDePartida('checkmate_win')" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold py-2 rounded-lg transition">Simular Vitória (Mate)</button>
+<button onclick="fimDePartida('resignation')" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 text-xs font-bold py-2 rounded-lg transition">Resignar (Desistir)</button>
+<button onclick="fimDePartida('draw')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded-lg transition border border-slate-700">Empate</button>
+<button onclick="fimDePartida('abort')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded-lg transition border border-slate-700">Abortar</button>
+</div>
+</div>
+
 <div class="bg-dark-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
 <h2 class="text-base font-bold text-white mb-2 flex items-center gap-2">
 <i data-lucide="award" class="text-amber-400 w-5 h-5"></i> Campeonatos Oficiais
@@ -255,24 +245,8 @@ Autenticar como Criador
 <span class="text-sm font-mono font-bold text-emerald-400 bg-dark-900 px-3 py-1 rounded border border-slate-800" id="timerPlayer">10:00</span>
 </div>
 
-<!-- PAINEL DE CONTROLOS NO TABULEIRO -->
-<div class="w-full max-w-[480px] mt-3 grid grid-cols-4 gap-2">
-<button onclick="fimDePartida('resignation')" class="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-500/30 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1" title="Desistir da Partida">
-<i data-lucide="flag" class="w-3.5 h-3.5"></i> Desistir
-</button>
-<button onclick="fimDePartida('abort')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2 rounded-xl transition border border-slate-700 flex items-center justify-center gap-1" title="Abortar Partida">
-<i data-lucide="x-circle" class="w-3.5 h-3.5"></i> Abortar
-</button>
-<button onclick="fazerRematch()" class="bg-brand-500/20 hover:bg-brand-500/45 text-brand-400 border border-brand-500/30 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1" title="Jogar Novamente">
-<i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Rematch
-</button>
-<button onclick="iniciarBuscaOponente()" class="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 text-xs font-bold py-2 rounded-xl transition flex items-center justify-center gap-1" title="Procurar Novo Jogo">
-<i data-lucide="search" class="w-3.5 h-3.5"></i> Novo Jogo
-</button>
-</div>
-
 <div id="gameStatus" class="mt-4 text-xs font-medium text-slate-400 bg-dark-950 px-4 py-2 rounded-full border border-slate-800">
-Faça login e inicie uma partida.
+Selecione a modalidade, o valor da aposta e clique em "Procurar Oponente 1v1".
 </div>
 </div>
 </main>
@@ -370,12 +344,9 @@ let matchmakingInterval = null;
 let gameTimerInterval = null;
 let playerTime = 600;
 let opponentTime = 600;
-let activeMatchStake = 10;
-let activeMatchMode = "Blitz";
+let activeMatchStake = 0;
+let activeMatchMode = "";
 let isMatchActive = false;
-
-const CREATOR_EMAIL = "andradegeovane4@gmail.com";
-const CREATOR_PASS = "Fogo@2026";
 
 let campeonatos = {
 mundial: { nome: "Mundial Chess Arena", inscritos: 82, max: 100, inscritoUser: false }
@@ -400,23 +371,10 @@ tabLoginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400
 }
 }
 
-// LOGIN PRINCIPAL (Deteta se é o criador ou utilizador normal)
 function handleLogin(e) {
 e.preventDefault();
-const inputEmail = document.getElementById('loginEmail').value.trim();
-const inputPass = document.getElementById('loginPass').value.trim();
-
-if (inputEmail === CREATOR_EMAIL && inputPass === CREATOR_PASS) {
-isCreatorAuthenticated = true;
-currentUser = "Criador (Admin)";
-balance = 200000.00;
-document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
-} else {
-isCreatorAuthenticated = false;
-currentUser = inputEmail.split('@')[0];
+currentUser = document.getElementById('loginEmail').value.split('@')[0];
 balance = 0.00;
-document.getElementById('creatorBtnText').innerText = "Área do Criador";
-}
 finalizeAuth();
 }
 
@@ -424,7 +382,6 @@ function handleRegister(e) {
 e.preventDefault();
 currentUser = document.getElementById('regUser').value;
 balance = 0.00;
-isCreatorAuthenticated = false;
 finalizeAuth();
 }
 
@@ -448,7 +405,7 @@ e.preventDefault();
 const user = document.getElementById('creatorUser').value.trim();
 const pass = document.getElementById('creatorPass').value.trim();
 
-if (user === CREATOR_EMAIL && pass === CREATOR_PASS) {
+if (user === "andradegeovane4@gmail.com" && pass === "Fogo@2026") {
 isCreatorAuthenticated = true;
 currentUser = "Criador (Admin)";
 balance = 200000.00;
@@ -622,4 +579,145 @@ gameTimerInterval = setInterval(() => {
 if (!isMatchActive) return;
 
 if (playerTime > 0) playerTime--;
-if (opponentTime > 0)
+if (opponentTime > 0) opponentTime--;
+
+let pMin = String(Math.floor(playerTime / 60)).padStart(2, '0');
+let pSec = String(playerTime % 60).padStart(2, '0');
+document.getElementById('timerPlayer').innerText = `${pMin}:${pSec}`;
+
+let oMin = String(Math.floor(opponentTime / 60)).padStart(2, '0');
+let oSec = String(opponentTime % 60).padStart(2, '0');
+document.getElementById('timerOpponent').innerText = `${oMin}:${oSec}`;
+
+if (playerTime <= 0) {
+clearInterval(gameTimerInterval);
+fimDePartida('timeout_loss');
+} else if (opponentTime <= 0) {
+clearInterval(gameTimerInterval);
+fimDePartida('timeout_win');
+}
+}, 1000);
+}
+
+// FORMAS DE TÉRMINO DA PARTIDA
+function fimDePartida(tipo) {
+if (!isMatchActive && tipo !== 'checkmate_win') {
+alert('Nenhuma partida ativa no momento.');
+return;
+}
+isMatchActive = false;
+clearInterval(gameTimerInterval);
+
+let msg = "";
+const totalPot = activeMatchStake * 2;
+const prize = totalPot > 0 ? totalPot - (totalPot * 0.10) : 18.00; 
+const stakeUsed = activeMatchStake > 0 ? activeMatchStake : 10.00;
+
+if (tipo === 'checkmate_win' || tipo === 'timeout_win') {
+userWinsCount++;
+netProfit += (prize - stakeUsed);
+balance += prize;
+if(isCreatorAuthenticated) balance = 200000.00;
+
+msg = `🎉 Vitória! Ganhou €${prize.toFixed(2)} (Creditado no saldo).`;
+document.getElementById('gameStatus').innerText = msg;
+if(document.querySelector('.history-item .status-label')) {
+document.querySelector('.history-item .status-label').innerText = "Vitória 🏆";
+document.querySelector('.history-item .status-label').className = "text-emerald-400 block text-[10px] font-bold status-label";
+}
+
+} else if (tipo === 'checkmate_loss' || tipo === 'resignation' || tipo === 'timeout_loss') {
+netProfit -= stakeUsed;
+msg = `❌ Derrota. Aposta de €${stakeUsed.toFixed(2)} perdida.`;
+document.getElementById('gameStatus').innerText = msg;
+if(document.querySelector('.history-item .status-label')) {
+document.querySelector('.history-item .status-label').innerText = "Derrota ❌";
+document.querySelector('.history-item .status-label').className = "text-red-400 block text-[10px] font-bold status-label";
+}
+
+} else if (tipo === 'draw' || tipo === 'stalemate') {
+balance += stakeUsed;
+if(isCreatorAuthenticated) balance = 200000.00;
+msg = `🤝 Partida Empatada! A aposta de €${stakeUsed.toFixed(2)} foi devolvida.`;
+document.getElementById('gameStatus').innerText = msg;
+if(document.querySelector('.history-item .status-label')) {
+document.querySelector('.history-item .status-label').innerText = "Empate 🤝";
+document.querySelector('.history-item .status-label').className = "text-amber-400 block text-[10px] font-bold status-label";
+}
+
+} else if (tipo === 'abort') {
+balance += stakeUsed;
+if(isCreatorAuthenticated) balance = 200000.00;
+msg = `⚠️ Partida Abortada. Aposta devolvida sem taxas.`;
+document.getElementById('gameStatus').innerText = msg;
+if(document.querySelector('.history-item .status-label')) {
+document.querySelector('.history-item .status-label').innerText = "Abortada ⚠️";
+document.querySelector('.history-item .status-label').className = "text-slate-400 block text-[10px] status-label";
+}
+}
+
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
+document.getElementById('playerNetProfit').innerText = `€${netProfit.toFixed(2)}`;
+const winRate = userGamesCount > 0 ? Math.round((userWinsCount / userGamesCount) * 100) : 0;
+document.querySelector('#playerModal .grid.grid-cols-3 div:nth-child(2) span:nth-child(2)').innerText = `${winRate}%`;
+
+alert(msg);
+}
+
+let board = null;
+let game = null;
+
+$(document).ready(function() {
+    game = new Chess();
+    board = Chessboard('board', {
+        draggable: true,
+        position: 'start',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+        onDrop: onDrop,
+        onSnapEnd: onSnapEnd
+    });
+});
+
+function makeRandomMove() {
+    if (!isMatchActive) return;
+    const possibleMoves = game.moves();
+    if (possibleMoves.length === 0) return;
+
+    const randomIdx = Math.floor(Math.random() * possibleMoves.length);
+    game.move(possibleMoves[randomIdx]);
+    board.position(game.fen());
+
+    // Verificar se a IA aplicou mate ao jogador
+    if (game.in_checkmate() || game.game_over()) {
+        fimDePartida('checkmate_loss');
+    }
+}
+
+function onDrop(source, target) {
+    if (!isMatchActive) {
+        alert('Inicie ou procure uma partida primeiro!');
+        return 'snapback';
+    }
+
+    const move = game.move({ from: source, to: target, promotion: 'q' });
+    if (move === null) return 'snapback';
+
+    // Verificar se o jogador aplicou xeque-mate ou se o jogo terminou
+    if (game.in_checkmate() || game.game_over()) {
+        if (game.in_checkmate()) {
+            fimDePartida('checkmate_win');
+        } else {
+            fimDePartida('draw');
+        }
+        return;
+    }
+
+    window.setTimeout(makeRandomMove, 300);
+}
+
+function onSnapEnd() {
+    board.position(game.fen());
+}
+</script>
+</body>
+</html>
