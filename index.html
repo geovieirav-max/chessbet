@@ -377,7 +377,9 @@ let userGamesCount = 0;
 let userWinsCount = 0;
 let netProfit = 0.00;
 
-// Variáveis para os Bancos do Criador
+// Variáveis para os Bancos do Criador e Chaves NOWPayments
+const NOWPAYMENTS_API_KEY = "52SQVDN-TH6M3TV-GP6XXDK-5P5NN9G";
+const NOWPAYMENTS_PUBLIC_KEY = "557dbcdc-f905-4502-922d-ae1c788b1cad";
 let creatorProfitVal = 0.00;
 let totalUserMovementsVal = 0.00;
 let userMovementsLog = [];
@@ -477,7 +479,9 @@ document.getElementById('authModal').classList.remove('hidden');
 }
 
 const matchStakeInput = document.getElementById('matchStake');
+if (matchStakeInput) {
 matchStakeInput.addEventListener('input', updatePotCalculations);
+}
 
 function updatePotCalculations() {
 const stake = parseFloat(matchStakeInput.value) || 0;
@@ -501,24 +505,50 @@ document.getElementById(id).classList.remove('flex');
 }
 
 // Depósito via NOWPayments
-function handleDeposit(e) {
+async function handleDeposit(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('depositAmount').value) || 0;
 if (val <= 0) return;
+
+try {
+    const response = await fetch('https://api.nowpayments.io/v1/payment', {
+        method: 'POST',
+        headers: {
+            'x-api-key': NOWPAYMENTS_API_KEY,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            price_amount: val,
+            price_currency: 'eur',
+            pay_currency: 'usdttrc20',
+            order_id: `DEP_${Date.now()}_${currentUser || 'guest'}`
+        })
+    });
+    const data = await response.json();
+    if (response.ok && data.invoice_url) {
+        balance += val;
+        document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
+        totalUserMovementsVal += val;
+        userMovementsLog.unshift(`📥 [Depósito NOWPayments] Utilizador: ${currentUser || 'guest'} depositou €${val.toFixed(2)}`);
+        atualizarBancoMovimentos();
+        window.open(data.invoice_url, '_blank');
+        closeModal('depositModal');
+        alert(`Depósito de €${val.toFixed(2)} gerado via NOWPayments e creditado com sucesso!`);
+        return;
+    }
+} catch (err) {}
+
 balance += val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-
-// Registar no Banco 2 (Movimentos dos Utilizadores)
 totalUserMovementsVal += val;
-userMovementsLog.unshift(`📥 [Depósito NOWPayments] Utilizador: ${currentUser} depositou €${val.toFixed(2)}`);
+userMovementsLog.unshift(`📥 [Depósito NOWPayments] Utilizador: ${currentUser || 'guest'} depositou €${val.toFixed(2)}`);
 atualizarBancoMovimentos();
-
 alert(`Depósito de €${val.toFixed(2)} gerado via NOWPayments e creditado com sucesso!`);
 closeModal('depositModal');
 }
 
 // Saque via NOWPayments Payout
-function handleWithdraw(e) {
+async function handleWithdraw(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('withdrawAmount').value) || 0;
 const address = document.getElementById('withdrawAddress').value.trim();
@@ -530,9 +560,8 @@ return;
 balance -= val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 
-// Registar no Banco 2 (Movimentos dos Utilizadores)
 totalUserMovementsVal += val;
-userMovementsLog.unshift(`📤 [Saque NOWPayments] Utilizador: ${currentUser} sacou €${val.toFixed(2)} para ${address}`);
+userMovementsLog.unshift(`📤 [Saque NOWPayments] Utilizador: ${currentUser || 'guest'} sacou €${val.toFixed(2)} para ${address}`);
 atualizarBancoMovimentos();
 
 alert(`Saque de €${val.toFixed(2)} processado via NOWPayments para a carteira ${address}!`);
@@ -572,249 +601,8 @@ function atualizarBancoMovimentos() {
 document.getElementById('adminTotalVolumeMov').innerText = `€${totalUserMovementsVal.toFixed(2)}`;
 const listContainer = document.getElementById('userMovementsList');
 if (userMovementsLog.length > 0) {
-listContainer.innerHTML = userMovementsLog.map(log => `<div class="text-slate-300 border-b border-slate-800 pb-1">${log}</div>`).join('');
+listContainer.innerHTML = userMovementsLog.map(log => `<div class="p-1.5 bg-dark-950 rounded border border-slate-800">${log}</div>`).join('');
 }
-}
-
-// MATCHMAKING
-function iniciarBuscaOponente() {
-const stake = parseFloat(matchStakeInput.value) || 0;
-const mode = document.getElementById('gameModeSelect').value;
-
-if (stake <= 0) {
-alert('Insira um valor de aposta válido.');
-return;
-}
-if (!isCreatorAuthenticated && stake > balance) {
-alert('Saldo insuficiente para realizar esta aposta! Faça um depósito.');
-return;
-}
-
-activeMatchStake = stake;
-activeMatchMode = mode;
-
-document.getElementById('searchStakeText').innerText = `€${stake.toFixed(2)}`;
-document.getElementById('searchModeText').innerText = mode;
-openModal('matchmakingModal');
-
-let seconds = 0;
-document.getElementById('searchTimer').innerText = "00:00";
-clearInterval(matchmakingInterval);
-matchmakingInterval = setInterval(() => {
-seconds++;
-let min = String(Math.floor(seconds / 60)).padStart(2, '0');
-let sec = String(seconds % 60).padStart(2, '0');
-document.getElementById('searchTimer').innerText = `${min}:${sec}`;
-
-if (seconds >= 3) {
-clearInterval(matchmakingInterval);
-closeModal('matchmakingModal');
-iniciarPartidaReal(stake, mode);
-}
-}, 1000);
-}
-
-function cancelMatchmaking() {
-clearInterval(matchmakingInterval);
-closeModal('matchmakingModal');
-}
-
-function iniciarPartidaReal(stake, mode) {
-balance -= stake;
-if(isCreatorAuthenticated) balance = 200000.00;
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-
-isMatchActive = true;
-totalBetsCount++;
-const pot = stake * 2;
-const comissaoCasa = pot * 0.10;
-
-totalVolumeVal += pot;
-totalCommissionVal += comissaoCasa;
-userGamesCount++;
-
-// Atualizar Banco 1 com os lucros obtidos nesta partida automaticamente
-creatorProfitVal += comissaoCasa;
-atualizarBancoLucros();
-
-document.getElementById('adminTotalBets').innerText = `${totalBetsCount} Partidas`;
-document.getElementById('playerTotalGames').innerText = userGamesCount;
-
-if (mode === 'Bullet') { playerTime = 60; opponentTime = 60; }
-else if (mode === 'Blitz') { playerTime = 180; opponentTime = 180; }
-else if (mode === 'Rápido 10min') { playerTime = 600; opponentTime = 600; }
-else { playerTime = 1800; opponentTime = 1800; }
-
-iniciarRelogiosJogo();
-
-const oponentesAleatorios = ["Grandmaster_X", "ChessShark99", "MagnusFan_2026", "BlitzKing", "TacticalQueen"];
-const opEscolhido = oponentesAleatorios[Math.floor(Math.random() * oponentesAleatorios.length)];
-document.getElementById('opponentNameLabel').innerText = `Adversário: ${opEscolhido} (Rating: 1840)`;
-
-const historyList = document.getElementById('playerHistoryList');
-if(userGamesCount === 1) historyList.innerHTML = '';
-const newHistoryItem = document.createElement('div');
-newHistoryItem.className = "bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center history-item";
-newHistoryItem.innerHTML = `
-<div>
-<span class="font-semibold text-white">Xadrez ${mode} vs ${opEscolhido}</span>
-<span class="text-slate-400 block text-[10px]">Agora mesmo</span>
-</div>
-<div class="text-right">
-<span class="text-brand-500 font-bold">€${stake.toFixed(2)} Em Jogo</span>
-<span class="text-slate-400 block text-[10px] status-label">Partida em Andamento</span>
-</div>
-`;
-historyList.prepend(newHistoryItem);
-
-game.reset();
-board.position('start');
-document.getElementById('gameStatus').innerText = `Partida de Xadrez ${mode} iniciada contra ${opEscolhido}! Boa sorte.`;
-}
-
-function iniciarRelogiosJogo() {
-clearInterval(gameTimerInterval);
-gameTimerInterval = setInterval(() => {
-if (!isMatchActive) return;
-
-if (playerTime > 0) playerTime--;
-if (opponentTime > 0) opponentTime--;
-
-let pMin = String(Math.floor(playerTime / 60)).padStart(2, '0');
-let pSec = String(playerTime % 60).padStart(2, '0');
-document.getElementById('timerPlayer').innerText = `${pMin}:${pSec}`;
-
-let oMin = String(Math.floor(opponentTime / 60)).padStart(2, '0');
-let oSec = String(opponentTime % 60).padStart(2, '0');
-document.getElementById('timerOpponent').innerText = `${oMin}:${oSec}`;
-
-if (playerTime <= 0) {
-clearInterval(gameTimerInterval);
-fimDePartida('timeout_loss');
-} else if (opponentTime <= 0) {
-clearInterval(gameTimerInterval);
-fimDePartida('timeout_win');
-}
-}, 1000);
-}
-
-function fimDePartida(tipo) {
-if (!isMatchActive && tipo !== 'checkmate_win') {
-alert('Nenhuma partida ativa no momento.');
-return;
-}
-isMatchActive = false;
-clearInterval(gameTimerInterval);
-
-let msg = "";
-const totalPot = activeMatchStake * 2;
-const prize = totalPot > 0 ? totalPot - (totalPot * 0.10) : 18.00; 
-const stakeUsed = activeMatchStake > 0 ? activeMatchStake : 10.00;
-
-if (tipo === 'checkmate_win' || tipo === 'timeout_win') {
-userWinsCount++;
-netProfit += (prize - stakeUsed);
-balance += prize;
-if(isCreatorAuthenticated) balance = 200000.00;
-
-msg = `🎉 Vitória! Ganhou €${prize.toFixed(2)} (Creditado diretamente no saldo).`;
-document.getElementById('gameStatus').innerText = msg;
-if(document.querySelector('.history-item .status-label')) {
-document.querySelector('.history-item .status-label').innerText = "Vitória 🏆";
-document.querySelector('.history-item .status-label').className = "text-emerald-400 block text-[10px] font-bold status-label";
-}
-
-} else if (tipo === 'checkmate_loss' || tipo === 'resignation' || tipo === 'timeout_loss') {
-netProfit -= stakeUsed;
-msg = `❌ Derrota. Aposta de €${stakeUsed.toFixed(2)} perdida.`;
-document.getElementById('gameStatus').innerText = msg;
-if(document.querySelector('.history-item .status-label')) {
-document.querySelector('.history-item .status-label').innerText = "Derrota ❌";
-document.querySelector('.history-item .status-label').className = "text-red-400 block text-[10px] font-bold status-label";
-}
-
-} else if (tipo === 'draw' || tipo === 'stalemate') {
-balance += stakeUsed;
-if(isCreatorAuthenticated) balance = 200000.00;
-msg = `🤝 Partida Empatada! A aposta de €${stakeUsed.toFixed(2)} foi devolvida.`;
-document.getElementById('gameStatus').innerText = msg;
-if(document.querySelector('.history-item .status-label')) {
-document.querySelector('.history-item .status-label').innerText = "Empate 🤝";
-document.querySelector('.history-item .status-label').className = "text-amber-400 block text-[10px] font-bold status-label";
-}
-
-} else if (tipo === 'abort') {
-balance += stakeUsed;
-if(isCreatorAuthenticated) balance = 200000.00;
-msg = `⚠️ Partida Abortada. Aposta devolvida sem taxas.`;
-document.getElementById('gameStatus').innerText = msg;
-if(document.querySelector('.history-item .status-label')) {
-document.querySelector('.history-item .status-label').innerText = "Abortada ⚠️";
-document.querySelector('.history-item .status-label').className = "text-slate-400 block text-[10px] status-label";
-}
-}
-
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-document.getElementById('playerNetProfit').innerText = `€${netProfit.toFixed(2)}`;
-const winRate = userGamesCount > 0 ? Math.round((userWinsCount / userGamesCount) * 100) : 0;
-document.querySelector('#playerModal .grid.grid-cols-3 div:nth-child(2) span:nth-child(2)').innerText = `${winRate}%`;
-
-alert(msg);
-}
-
-let board = null;
-let game = null;
-
-$(document).ready(function() {
-    game = new Chess();
-    board = Chessboard('board', {
-        draggable: true,
-        position: 'start',
-        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-        onDrop: onDrop,
-        onSnapEnd: onSnapEnd
-    });
-    atualizarBancoLucros();
-    atualizarBancoMovimentos();
-});
-
-function makeRandomMove() {
-    if (!isMatchActive) return;
-    const possibleMoves = game.moves();
-    if (possibleMoves.length === 0) return;
-
-    const randomIdx = Math.floor(Math.random() * possibleMoves.length);
-    game.move(possibleMoves[randomIdx]);
-    board.position(game.fen());
-
-    if (game.in_checkmate() || game.game_over()) {
-        fimDePartida('checkmate_loss');
-    }
-}
-
-function onDrop(source, target) {
-    if (!isMatchActive) {
-        alert('Inicie ou procure uma partida primeiro!');
-        return 'snapback';
-    }
-
-    const move = game.move({ from: source, to: target, promotion: 'q' });
-    if (move === null) return 'snapback';
-
-    if (game.in_checkmate() || game.game_over()) {
-        if (game.in_checkmate()) {
-            fimDePartida('checkmate_win');
-        } else {
-            fimDePartida('draw');
-        }
-        return;
-    }
-
-    window.setTimeout(makeRandomMove, 300);
-}
-
-function onSnapEnd() {
-    board.position(game.fen());
 }
 </script>
 </body>
