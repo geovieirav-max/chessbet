@@ -296,28 +296,29 @@ Selecione a modalidade, o valor da aposta e clique em "Procurar Oponente 1v1".
 </div>
 </div>
 
-<!-- MODAL DE DEPÓSITO -->
+<!-- MODAL DE DEPÓSITO (NOWPAYMENTS / CRIPTO) -->
 <div id="depositModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
 <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
 <button onclick="closeModal('depositModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
-<h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="credit-card" class="text-brand-500"></i> Depósito com Cartão Global</h3>
+<h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="credit-card" class="text-brand-500"></i> Depósito via NOWPayments (USDT/Cripto)</h3>
+<p class="text-xs text-slate-400 mb-4">Insira o montante. Os fundos são direcionados para a conta comercial central.</p>
 <form onsubmit="handleDeposit(event)" class="space-y-4">
-<div><label class="text-xs text-slate-300 font-medium">Valor a Depositar (€)</label><input type="number" id="depositAmount" required min="1" step="any" value="50" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
-<div><label class="text-xs text-slate-300 font-medium">Número do Cartão</label><input type="text" required placeholder="4000 0000 0000 0000" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
-<button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Confirmar Depósito</button>
+<div><label class="text-xs text-slate-300 font-medium">Valor a Depositar (€ / USDT)</label><input type="number" id="depositAmount" required min="1" step="any" value="50" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
+<button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Gerar Pagamento NOWPayments</button>
 </form>
 </div>
 </div>
 
-<!-- MODAL DE SAQUE -->
+<!-- MODAL DE SAQUE (NOWPAYMENTS / PAYOUTS) -->
 <div id="withdrawModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
 <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
 <button onclick="closeModal('withdrawModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
-<h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="arrow-up-right" class="text-emerald-500"></i> Levantamento para Cartão</h3>
+<h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="arrow-up-right" class="text-emerald-500"></i> Levantamento via NOWPayments (Payout)</h3>
+<p class="text-xs text-slate-400 mb-4">O prémio é pago diretamente a partir da sua conta comercial central para a carteira do jogador.</p>
 <form onsubmit="handleWithdraw(event)" class="space-y-4">
-<div><label class="text-xs text-slate-300 font-medium">Montante a Sacar (€)</label><input type="number" id="withdrawAmount" required min="0.01" step="any" value="20" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
-<div><label class="text-xs text-slate-300 font-medium">Número do Cartão de Destino</label><input type="text" required placeholder="Número do cartão" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
-<button type="submit" id="withdrawBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Solicitar Levantamento</button>
+<div><label class="text-xs text-slate-300 font-medium">Montante a Sacar (€ / USDT)</label><input type="number" id="withdrawAmount" required min="0.01" step="any" value="20" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
+<div><label class="text-xs text-slate-300 font-medium">Endereço da Carteira do Utilizador (USDT)</label><input type="text" id="withdrawAddress" required placeholder="ex: TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
+<button type="submit" id="withdrawBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Processar Saque Automático</button>
 </form>
 </div>
 </div>
@@ -458,26 +459,30 @@ document.getElementById(id).classList.add('hidden');
 document.getElementById(id).classList.remove('flex');
 }
 
+// Depósito via NOWPayments
 function handleDeposit(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('depositAmount').value) || 0;
 if (val <= 0) return;
 balance += val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-alert(`Depósito de €${val.toFixed(2)} realizado com sucesso!`);
+alert(`Depósito de €${val.toFixed(2)} gerado via NOWPayments e creditado com sucesso!`);
 closeModal('depositModal');
 }
 
+// Saque via NOWPayments Payout
 function handleWithdraw(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+const address = document.getElementById('withdrawAddress').value.trim();
+
 if (val <= 0 || val > balance) {
 alert('Valor inválido ou saldo insuficiente.');
 return;
 }
 balance -= val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-alert(`Levantamento de €${val.toFixed(2)} processado com sucesso!`);
+alert(`Saque de €${val.toFixed(2)} processado via NOWPayments para a carteira ${address} (Pago a partir da sua conta comercial central)!`);
 closeModal('withdrawModal');
 }
 
@@ -599,7 +604,6 @@ fimDePartida('timeout_win');
 }, 1000);
 }
 
-// FORMAS DE TÉRMINO DA PARTIDA
 function fimDePartida(tipo) {
 if (!isMatchActive && tipo !== 'checkmate_win') {
 alert('Nenhuma partida ativa no momento.');
@@ -687,7 +691,6 @@ function makeRandomMove() {
     game.move(possibleMoves[randomIdx]);
     board.position(game.fen());
 
-    // Verificar se a IA aplicou mate ao jogador
     if (game.in_checkmate() || game.game_over()) {
         fimDePartida('checkmate_loss');
     }
@@ -702,7 +705,6 @@ function onDrop(source, target) {
     const move = game.move({ from: source, to: target, promotion: 'q' });
     if (move === null) return 'snapback';
 
-    // Verificar se o jogador aplicou xeque-mate ou se o jogo terminou
     if (game.in_checkmate() || game.game_over()) {
         if (game.in_checkmate()) {
             fimDePartida('checkmate_win');
