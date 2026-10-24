@@ -271,27 +271,60 @@ Selecione a modalidade, o valor da aposta e clique em "Procurar Oponente 1v1".
 </div>
 </div>
 
-<!-- MODAL: PAINEL DO ADMINISTRADOR -->
+<!-- MODAL: PAINEL DO ADMINISTRADOR (DOIS BANCOS DO CRIADOR) -->
 <div id="adminModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center z-50 p-4">
-<div class="bg-dark-900 border border-amber-500/30 rounded-2xl max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">
+<div class="bg-dark-900 border border-amber-500/30 rounded-2xl max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl space-y-6">
 <button onclick="closeModal('adminModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
-<div class="flex items-center gap-3 mb-6">
+<div class="flex items-center gap-3">
 <div class="bg-amber-500 text-dark-950 p-2.5 rounded-xl font-bold"><i data-lucide="crown" class="w-6 h-6"></i></div>
-<div><h3 class="text-xl font-bold text-white">Painel Geral do Criador</h3><p class="text-xs text-slate-400">Estatísticas globais de tráfego, acessos e faturamento de comissões.</p></div>
+<div><h3 class="text-xl font-bold text-white">Painel Geral do Criador & Gestão de Bancos</h3><p class="text-xs text-slate-400">Controlo de lucros da casa e monitorização dos movimentos dos utilizadores.</p></div>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Hoje)</span><div class="text-2xl font-black text-brand-500 mt-1">1,420</div><span class="text-[10px] text-emerald-400">+12% vs ontem</span></div>
-<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Semana)</span><div class="text-2xl font-black text-brand-500 mt-1">9,850</div><span class="text-[10px] text-emerald-400">+5% vs semana ant.</span></div>
-<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Mês)</span><div class="text-2xl font-black text-brand-500 mt-1">42,100</div><span class="text-[10px] text-emerald-400">+18% vs mês ant.</span></div>
-<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Ano)</span><div class="text-2xl font-black text-brand-500 mt-1">315,900</div><span class="text-[10px] text-emerald-400">Crescimento contínuo</span></div>
+
+<!-- SEÇÃO DOS DOIS BANCOS -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <!-- BANCO 1: LUCROS DA CASA -->
+    <div class="bg-dark-950 p-5 rounded-2xl border border-amber-500/40 space-y-4 shadow-xl">
+        <div class="flex justify-between items-center">
+            <span class="text-xs uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5"><i data-lucide="wallet" class="w-4 h-4"></i> Banco 1: Lucros da Casa</span>
+            <span class="text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded">Comissões & Taxas</span>
+        </div>
+        <div>
+            <div class="text-[11px] text-slate-400">Saldo Disponível de Lucros</div>
+            <div class="text-2xl font-black text-white mt-1" id="creatorProfitBalance">€0.00</div>
+        </div>
+        <div class="bg-dark-900 p-3 rounded-xl border border-slate-800 text-[11px] space-y-1 text-slate-300">
+            <div class="font-bold text-brand-500">Conta Caixa Económica de Cabo Verde:</div>
+            <div>Nº Conta: 37558582</div>
+            <div>NIB: 000200003755858210123</div>
+            <div>IBAN: CV640002000037558582</div>
+            <div>Cartão: 6034451408059360</div>
+        </div>
+        <button onclick="sacarLucrosCriador()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 rounded-xl transition text-xs flex items-center justify-center gap-2 shadow-lg">
+            <i data-lucide="send" class="w-4 h-4"></i> Sacar Lucros para Cartão / Conta CV
+        </button>
+    </div>
+
+    <!-- BANCO 2: MOVIMENTOS DOS UTILIZADORES -->
+    <div class="bg-dark-950 p-5 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
+        <div class="flex justify-between items-center">
+            <span class="text-xs uppercase tracking-wider font-bold text-cyan-400 flex items-center gap-1.5"><i data-lucide="activity" class="w-4 h-4"></i> Banco 2: Movimentos Globais</span>
+            <span class="text-xs bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded">NOWPayments</span>
+        </div>
+        <div>
+            <div class="text-[11px] text-slate-400">Total Movimentado (Depósitos / Saques)</div>
+            <div class="text-2xl font-black text-cyan-400 mt-1" id="adminTotalVolumeMov">€0.00</div>
+        </div>
+        <div class="bg-dark-900 p-3 rounded-xl border border-slate-800 text-[11px] space-y-2 max-h-[120px] overflow-y-auto" id="userMovementsList">
+            <div class="text-slate-500 text-center py-2">Nenhum movimento registado ainda.</div>
+        </div>
+    </div>
 </div>
-<div class="bg-dark-950 p-5 rounded-xl border border-slate-800 mb-6">
-<h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2"><i data-lucide="trending-up" class="text-emerald-500 w-4 h-4"></i> Volume de Apostas & Campeonatos</h4>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-<div class="bg-dark-900 p-3.5 rounded-lg border border-slate-800"><span class="text-xs text-slate-400 block">Total de Partidas / Entradas</span><span id="adminTotalBets" class="text-lg font-bold text-white mt-1 block">0 Partidas</span></div>
-<div class="bg-dark-900 p-3.5 rounded-lg border border-slate-800"><span class="text-xs text-slate-400 block">Volume Total (€)</span><span id="adminTotalVolume" class="text-lg font-bold text-brand-500 mt-1 block">€0.00</span></div>
-<div class="bg-dark-900 p-3.5 rounded-lg border border-slate-800"><span class="text-xs text-slate-400 block">Receita Acumulada</span><span id="adminTotalCommission" class="text-lg font-bold text-emerald-400 mt-1 block">€0.00</span></div>
-</div>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Hoje)</span><div class="text-2xl font-black text-brand-500 mt-1">1,420</div></div>
+<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Semana)</span><div class="text-2xl font-black text-brand-500 mt-1">9,850</div></div>
+<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Mês)</span><div class="text-2xl font-black text-brand-500 mt-1">42,100</div></div>
+<div class="bg-dark-950 p-4 rounded-xl border border-slate-800"><span class="text-xs text-slate-400 font-medium">Acessos (Ano)</span><div class="text-2xl font-black text-brand-500 mt-1">315,900</div></div>
 </div>
 </div>
 </div>
@@ -340,6 +373,11 @@ let totalCommissionVal = 0.00;
 let userGamesCount = 0;
 let userWinsCount = 0;
 let netProfit = 0.00;
+
+// Variáveis para os Bancos do Criador
+let creatorProfitVal = 0.00;
+let totalUserMovementsVal = 0.00;
+let userMovementsLog = [];
 
 let matchmakingInterval = null;
 let gameTimerInterval = null;
@@ -466,6 +504,12 @@ const val = parseFloat(document.getElementById('depositAmount').value) || 0;
 if (val <= 0) return;
 balance += val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
+
+// Registar no Banco 2 (Movimentos dos Utilizadores)
+totalUserMovementsVal += val;
+userMovementsLog.unshift(`📥 [Depósito NOWPayments] Utilizador: ${currentUser} depositou €${val.toFixed(2)}`);
+atualizarBancoMovimentos();
+
 alert(`Depósito de €${val.toFixed(2)} gerado via NOWPayments e creditado com sucesso!`);
 closeModal('depositModal');
 }
@@ -482,8 +526,39 @@ return;
 }
 balance -= val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-alert(`Saque de €${val.toFixed(2)} processado via NOWPayments para a carteira ${address} (Pago a partir da sua conta comercial central)!`);
+
+// Registar no Banco 2 (Movimentos dos Utilizadores)
+totalUserMovementsVal += val;
+userMovementsLog.unshift(`📤 [Saque NOWPayments] Utilizador: ${currentUser} sacou €${val.toFixed(2)} para ${address}`);
+atualizarBancoMovimentos();
+
+alert(`Saque de €${val.toFixed(2)} processado via NOWPayments para a carteira ${address}!`);
 closeModal('withdrawModal');
+}
+
+// Função de Saque do Banco 1 (Lucros para Caixa Económica de Cabo Verde)
+function sacarLucrosCriador() {
+if (creatorProfitVal <= 0) {
+alert('Não tem lucros disponíveis para saque no Banco 1 neste momento.');
+return;
+}
+const valorSaque = creatorProfitVal;
+creatorProfitVal = 0;
+atualizarBancoLucros();
+
+alert(`Sucesso! Saque de €${valorSaque.toFixed(2)} enviado para a sua conta da Caixa Económica de Cabo Verde (Conta: 37558582 / IBAN: CV640002000037558582 / Cartão: 6034451408059360).`);
+}
+
+function atualizarBancoLucros() {
+document.getElementById('creatorProfitBalance').innerText = `€${creatorProfitVal.toFixed(2)}`;
+}
+
+function atualizarBancoMovimentos() {
+document.getElementById('adminTotalVolumeMov').innerText = `€${totalUserMovementsVal.toFixed(2)}`;
+const listContainer = document.getElementById('userMovementsList');
+if (userMovementsLog.length > 0) {
+listContainer.innerHTML = userMovementsLog.map(log => `<div class="text-slate-300 border-b border-slate-800 pb-1">${log}</div>`).join('');
+}
 }
 
 // MATCHMAKING
@@ -537,13 +612,17 @@ document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 isMatchActive = true;
 totalBetsCount++;
 const pot = stake * 2;
+const comissaoCasa = pot * 0.10;
+
 totalVolumeVal += pot;
-totalCommissionVal += (pot * 0.10);
+totalCommissionVal += comissaoCasa;
 userGamesCount++;
 
+// Atualizar Banco 1 com os lucros obtidos nesta partida
+creatorProfitVal += comissaoCasa;
+atualizarBancoLucros();
+
 document.getElementById('adminTotalBets').innerText = `${totalBetsCount} Partidas`;
-document.getElementById('adminTotalVolume').innerText = `€${totalVolumeVal.toFixed(2)}`;
-document.getElementById('adminTotalCommission').innerText = `€${totalCommissionVal.toFixed(2)}`;
 document.getElementById('playerTotalGames').innerText = userGamesCount;
 
 if (mode === 'Bullet') { playerTime = 60; opponentTime = 60; }
@@ -680,6 +759,8 @@ $(document).ready(function() {
         onDrop: onDrop,
         onSnapEnd: onSnapEnd
     });
+    atualizarBancoLucros();
+    atualizarBancoMovimentos();
 });
 
 function makeRandomMove() {
