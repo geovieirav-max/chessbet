@@ -271,12 +271,11 @@ Faça login e inicie uma partida ou campeonato.
 </div>
 </div>
 
-<!-- MODAL DE DEPÓSITO (Qualquer Valor) -->
+<!-- MODAL DE DEPÓSITO -->
 <div id="depositModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
 <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
 <button onclick="closeModal('depositModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
 <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="credit-card" class="text-brand-500"></i> Depósito com Cartão Global</h3>
-<p class="text-xs text-slate-400 mb-3">Deposite qualquer valor desejado de forma instantânea.</p>
 <form onsubmit="handleDeposit(event)" class="space-y-4">
 <div><label class="text-xs text-slate-300 font-medium">Valor a Depositar (€)</label><input type="number" id="depositAmount" required min="1" step="any" value="20" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
 <div><label class="text-xs text-slate-300 font-medium">Número do Cartão</label><input type="text" required placeholder="4000 0000 0000 0000" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
@@ -285,17 +284,13 @@ Faça login e inicie uma partida ou campeonato.
 </div>
 </div>
 
-<!-- MODAL DE SAQUE (Qualquer Valor) -->
+<!-- MODAL DE SAQUE -->
 <div id="withdrawModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
 <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
 <button onclick="closeModal('withdrawModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
 <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="arrow-up-right" class="text-emerald-500"></i> Levantamento para Cartão</h3>
-<p class="text-xs text-slate-400 mb-3">Levante qualquer quantia disponível no seu saldo.</p>
 <form onsubmit="handleWithdraw(event)" class="space-y-4">
-<div>
-<label class="text-xs text-slate-300 font-medium">Montante a Sacar (€)</label>
-<input type="number" id="withdrawAmount" required min="0.01" step="any" value="20" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
-</div>
+<div><label class="text-xs text-slate-300 font-medium">Montante a Sacar (€)</label><input type="number" id="withdrawAmount" required min="0.01" step="any" value="20" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
 <div><label class="text-xs text-slate-300 font-medium">Número do Cartão de Destino</label><input type="text" required placeholder="Número do cartão" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
 <button type="submit" id="withdrawBtn" class="w-full bg-emerald-500 hover:bg-emerald-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Solicitar Levantamento</button>
 </form>
@@ -324,7 +319,6 @@ bullet: { nome: "Grandmaster Bullet Cup", inscritos: 94, max: 100, inscritoUser:
 blitz: { nome: "ChessBet Elite Blitz", inscritos: 65, max: 100, inscritoUser: false }
 };
 
-// Funções de Autenticação de Jogador
 function switchAuthTab(tab) {
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
@@ -348,12 +342,14 @@ function handleLogin(e) {
 e.preventDefault();
 const identifier = document.getElementById('loginEmail').value;
 currentUser = identifier.split('@')[0];
+balance = 0.00; // Jogador comum começa com 0
 finalizeAuth();
 }
 
 function handleRegister(e) {
 e.preventDefault();
 currentUser = document.getElementById('regUser').value;
+balance = 0.00; // Jogador comum começa com 0
 finalizeAuth();
 }
 
@@ -361,11 +357,11 @@ function finalizeAuth() {
 document.getElementById('authModal').classList.add('hidden');
 document.getElementById('userNameDisplay').innerText = currentUser;
 document.getElementById('currentUserNameLabel').innerText = currentUser;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 document.getElementById('gameStatus').innerText = 'Sessão iniciada com sucesso. Pronto para jogar!';
 alert(`Bem-vindo, ${currentUser}! A sua conta gratuita foi ativada.`);
 }
 
-// Controlo de Acesso Exclusivo do Criador
 function verificarAcessoCriador() {
 if (isCreatorAuthenticated) {
 openModal('adminModal');
@@ -384,9 +380,16 @@ const CREATOR_PASS = "Fogo@2026";
 
 if (user === CREATOR_USER && pass === CREATOR_PASS) {
 isCreatorAuthenticated = true;
+currentUser = "Criador (Admin)";
+balance = 200000.00; // SALDO PERMANENTE DE 200 MIL EUROS PARA O CRIADOR
+
 closeModal('creatorAuthModal');
 document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
-alert('Acesso autorizado! Bem-vindo ao Painel do Criador.');
+document.getElementById('userNameDisplay').innerText = currentUser;
+document.getElementById('currentUserNameLabel').innerText = currentUser;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
+
+alert('Acesso autorizado! Saldo permanente de €200,000.00 carregado.');
 openModal('adminModal');
 } else {
 alert('Credenciais incorretas! Apenas o criador do jogo pode aceder a este painel.');
@@ -431,10 +434,7 @@ document.getElementById(id).classList.remove('flex');
 function handleDeposit(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('depositAmount').value) || 0;
-if (val <= 0) {
-alert('Insira um valor válido para depósito.');
-return;
-}
+if (val <= 0) return;
 balance += val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 alert(`Depósito de €${val.toFixed(2)} realizado com sucesso!`);
@@ -444,12 +444,8 @@ closeModal('depositModal');
 function handleWithdraw(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('withdrawAmount').value) || 0;
-if (val <= 0) {
-alert('Insira um valor válido para saque.');
-return;
-}
-if (val > balance) {
-alert('Saldo insuficiente para este levantamento.');
+if (val <= 0 || val > balance) {
+alert('Valor inválido ou saldo insuficiente.');
 return;
 }
 balance -= val;
@@ -465,11 +461,13 @@ alert('Você já está inscrito neste campeonato!');
 return;
 }
 if (balance < 50) {
-alert('Saldo insuficiente! Precisa de €50.00 na sua conta para pagar a inscrição do campeonato. Faça um depósito.');
+alert('Saldo insuficiente! Precisa de €50.00 para a inscrição.');
 return;
 }
 
 balance -= 50;
+if(isCreatorAuthenticated) balance = 200000.00; // Mantém fixo para o criador
+
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 camp.inscritoUser = true;
 camp.inscritos++;
@@ -487,29 +485,27 @@ badgeEl.className = "text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 
 badgeEl.innerText = "Iniciado 🚀 (100/100)";
 btnEl.innerText = "Campeonato em Curso";
 btnEl.disabled = true;
-alert(`Inscrição confirmada! O campeonato ${camp.nome} atingiu 100 inscritos e foi iniciado!`);
+alert(`Inscrição confirmada! O campeonato ${camp.nome} foi iniciado!`);
 } else {
 badgeEl.innerText = `Aguardando (${camp.inscritos}/100)`;
 btnEl.innerText = "Inscrito (Aguardando)";
 btnEl.classList.remove('bg-slate-800', 'hover:bg-slate-700', 'text-slate-200');
 btnEl.classList.add('bg-emerald-600/30', 'text-emerald-400', 'border-emerald-500/40');
 btnEl.disabled = true;
-alert(`Inscrição de €50.00 aceite no ${camp.nome}! Faltam ${camp.max - camp.inscritos} inscritos.`);
+alert(`Inscrição aceite no ${camp.nome}!`);
 }
 }
 
 function startMatch() {
 const stake = parseFloat(matchStakeInput.value) || 0;
-if (stake <= 0) {
-alert('Insira um valor de aposta válido.');
-return;
-}
-if (stake > balance) {
-alert('Saldo insuficiente para realizar esta aposta! Faça um depósito.');
+if (stake <= 0 || stake > balance) {
+alert('Valor inválido ou saldo insuficiente.');
 return;
 }
 
 balance -= stake;
+if(isCreatorAuthenticated) balance = 200000.00; // Mantém fixo para o criador
+
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 
 totalBetsCount++;
