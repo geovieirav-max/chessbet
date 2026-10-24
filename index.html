@@ -137,7 +137,6 @@ Autenticar como Criador
 <i data-lucide="user" class="w-4 h-4 text-brand-500"></i> Perfil
 </button>
 
-<!-- Botão Exclusivo de Login do Criador -->
 <button onclick="verificarAcessoCriador()" class="bg-amber-600 hover:bg-amber-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg transition">
 <i data-lucide="crown" class="w-4 h-4"></i> <span id="creatorBtnText">Área do Criador</span>
 </button>
@@ -246,7 +245,7 @@ Faça login e inicie uma partida ou campeonato.
 </div>
 </div>
 
-<!-- MODAL: PAINEL DO ADMINISTRADOR (EXCLUSIVO DO CRIADOR) -->
+<!-- MODAL: PAINEL DO ADMINISTRADOR -->
 <div id="adminModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center z-50 p-4">
 <div class="bg-dark-900 border border-amber-500/30 rounded-2xl max-w-4xl w-full p-6 relative max-h-[90vh] overflow-y-auto shadow-2xl">
 <button onclick="closeModal('adminModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
@@ -277,7 +276,7 @@ Faça login e inicie uma partida ou campeonato.
 <button onclick="closeModal('depositModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
 <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="credit-card" class="text-brand-500"></i> Depósito com Cartão Global</h3>
 <form onsubmit="handleDeposit(event)" class="space-y-4">
-<div><label class="text-xs text-slate-300 font-medium">Valor a Depositar (€)</label><input type="number" id="depositAmount" required min="1" step="any" value="20" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
+<div><label class="text-xs text-slate-300 font-medium">Valor a Depositar (€)</label><input type="number" id="depositAmount" required min="1" step="any" value="50" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
 <div><label class="text-xs text-slate-300 font-medium">Número do Cartão</label><input type="text" required placeholder="4000 0000 0000 0000" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
 <button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Confirmar Depósito</button>
 </form>
@@ -342,14 +341,14 @@ function handleLogin(e) {
 e.preventDefault();
 const identifier = document.getElementById('loginEmail').value;
 currentUser = identifier.split('@')[0];
-balance = 0.00; // Jogador comum começa com 0
+balance = 0.00;
 finalizeAuth();
 }
 
 function handleRegister(e) {
 e.preventDefault();
 currentUser = document.getElementById('regUser').value;
-balance = 0.00; // Jogador comum começa com 0
+balance = 0.00;
 finalizeAuth();
 }
 
@@ -359,7 +358,6 @@ document.getElementById('userNameDisplay').innerText = currentUser;
 document.getElementById('currentUserNameLabel').innerText = currentUser;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 document.getElementById('gameStatus').innerText = 'Sessão iniciada com sucesso. Pronto para jogar!';
-alert(`Bem-vindo, ${currentUser}! A sua conta gratuita foi ativada.`);
 }
 
 function verificarAcessoCriador() {
@@ -381,7 +379,7 @@ const CREATOR_PASS = "Fogo@2026";
 if (user === CREATOR_USER && pass === CREATOR_PASS) {
 isCreatorAuthenticated = true;
 currentUser = "Criador (Admin)";
-balance = 200000.00; // SALDO PERMANENTE DE 200 MIL EUROS PARA O CRIADOR
+balance = 200000.00;
 
 closeModal('creatorAuthModal');
 document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
@@ -460,13 +458,13 @@ if (camp.inscritoUser) {
 alert('Você já está inscrito neste campeonato!');
 return;
 }
-if (balance < 50) {
+if (!isCreatorAuthenticated && balance < 50) {
 alert('Saldo insuficiente! Precisa de €50.00 para a inscrição.');
 return;
 }
 
 balance -= 50;
-if(isCreatorAuthenticated) balance = 200000.00; // Mantém fixo para o criador
+if(isCreatorAuthenticated) balance = 200000.00;
 
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 camp.inscritoUser = true;
@@ -496,78 +494,85 @@ alert(`Inscrição aceite no ${camp.nome}!`);
 }
 }
 
-function startMatch() {
-const stake = parseFloat(matchStakeInput.value) || 0;
-if (stake <= 0 || stake > balance) {
-alert('Valor inválido ou saldo insuficiente.');
-return;
-}
-
-balance -= stake;
-if(isCreatorAuthenticated) balance = 200000.00; // Mantém fixo para o criador
-
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-
-totalBetsCount++;
-const pot = stake * 2;
-totalVolumeVal += pot;
-totalCommissionVal += (pot * 0.10);
-userGamesCount++;
-
-document.getElementById('adminTotalBets').innerText = `${totalBetsCount} Partidas`;
-document.getElementById('adminTotalVolume').innerText = `€${totalVolumeVal.toFixed(2)}`;
-document.getElementById('adminTotalCommission').innerText = `€${totalCommissionVal.toFixed(2)}`;
-document.getElementById('playerTotalGames').innerText = userGamesCount;
-
-const historyList = document.getElementById('playerHistoryList');
-if(userGamesCount === 1) historyList.innerHTML = '';
-const newHistoryItem = document.createElement('div');
-newHistoryItem.className = "bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center";
-newHistoryItem.innerHTML = `
-<div>
-<span class="font-semibold text-white">Xadrez Blitz 1v1</span>
-<span class="text-slate-400 block text-[10px]">Agora mesmo</span>
-</div>
-<div class="text-right">
-<span class="text-brand-500 font-bold">€${stake.toFixed(2)} Em Jogo</span>
-<span class="text-slate-400 block text-[10px]">Partida Ativa</span>
-</div>
-`;
-historyList.prepend(newHistoryItem);
-
-game.reset();
-board.start();
-document.getElementById('gameStatus').innerText = 'Partida a dinheiro iniciada! Boa sorte.';
-}
-
 let board = null;
-let game = new Chess();
+let game = null;
+
+$(document).ready(function() {
+    game = new Chess();
+    board = Chessboard('board', {
+        draggable: true,
+        position: 'start',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+        onDrop: onDrop,
+        onSnapEnd: onSnapEnd
+    });
+});
+
+function startMatch() {
+    const stake = parseFloat(matchStakeInput.value) || 0;
+    if (stake <= 0) {
+        alert('Insira um valor de aposta válido.');
+        return;
+    }
+    if (!isCreatorAuthenticated && stake > balance) {
+        alert('Saldo insuficiente para realizar esta aposta! Faça um depósito.');
+        return;
+    }
+
+    balance -= stake;
+    if(isCreatorAuthenticated) balance = 200000.00;
+
+    document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
+
+    totalBetsCount++;
+    const pot = stake * 2;
+    totalVolumeVal += pot;
+    totalCommissionVal += (pot * 0.10);
+    userGamesCount++;
+
+    document.getElementById('adminTotalBets').innerText = `${totalBetsCount} Partidas`;
+    document.getElementById('adminTotalVolume').innerText = `€${totalVolumeVal.toFixed(2)}`;
+    document.getElementById('adminTotalCommission').innerText = `€${totalCommissionVal.toFixed(2)}`;
+    document.getElementById('playerTotalGames').innerText = userGamesCount;
+
+    const historyList = document.getElementById('playerHistoryList');
+    if(userGamesCount === 1) historyList.innerHTML = '';
+    const newHistoryItem = document.createElement('div');
+    newHistoryItem.className = "bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center";
+    newHistoryItem.innerHTML = `
+        <div>
+            <span class="font-semibold text-white">Xadrez Blitz 1v1</span>
+            <span class="text-slate-400 block text-[10px]">Agora mesmo</span>
+        </div>
+        <div class="text-right">
+            <span class="text-brand-500 font-bold">€${stake.toFixed(2)} Em Jogo</span>
+            <span class="text-slate-400 block text-[10px]">Partida Ativa</span>
+        </div>
+    `;
+    historyList.prepend(newHistoryItem);
+
+    game.reset();
+    board.position('start');
+    document.getElementById('gameStatus').innerText = 'Partida a dinheiro iniciada! Boa sorte.';
+}
 
 function makeRandomMove() {
-const possibleMoves = game.moves();
-if (possibleMoves.length === 0) return;
-const randomIdx = Math.floor(Math.random() * possibleMoves.length);
-game.move(possibleMoves[randomIdx]);
-board.position(game.fen());
+    const possibleMoves = game.moves();
+    if (possibleMoves.length === 0) return;
+    const randomIdx = Math.floor(Math.random() * possibleMoves.length);
+    game.move(possibleMoves[randomIdx]);
+    board.position(game.fen());
 }
 
 function onDrop(source, target) {
-const move = game.move({ from: source, to: target, promotion: 'q' });
-if (move === null) return 'snapback';
-window.setTimeout(makeRandomMove, 250);
+    const move = game.move({ from: source, to: target, promotion: 'q' });
+    if (move === null) return 'snapback';
+    window.setTimeout(makeRandomMove, 250);
 }
 
 function onSnapEnd() {
-board.position(game.fen());
+    board.position(game.fen());
 }
-
-board = Chessboard('board', {
-draggable: true,
-position: 'start',
-pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-onDrop: onDrop,
-onSnapEnd: onSnapEnd
-});
 </script>
 </body>
 </html>
