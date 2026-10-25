@@ -10,7 +10,7 @@ app.use(cors());
 const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
 
-// 1. ENDPOINT DE DEPÓSITO (Cria fatura real no NOWPayments)
+// 1. ENDPOINT DE DEPÓSITO (Cria fatura real no NOWPayments para MetaMask / BSC)
 app.post('/api/deposit', async (req, res) => {
 try {
 const { username, amount } = req.body;
@@ -21,7 +21,6 @@ return res.status(400).json({ success: false, error: 'Montante inválido.' });
 
 console.log(`A criar fatura real no NOWPayments para o utilizador ${username}, montante: €${amount}`);
 
-// Chamada à API de faturas do NOWPayments (sem ipn_url direto no body)
 const response = await fetch(`${NOWPAYMENTS_API_URL}/invoice`, {
 method: 'POST',
 headers: {
@@ -31,7 +30,7 @@ headers: {
 body: JSON.stringify({
 price_amount: amount,
 price_currency: 'eur',
-pay_currency: 'usdttrc20',
+pay_currency: 'usdtbsc', // Compatível com endereços 0x da MetaMask (Rede BSC)
 order_id: `dep_${username}_${Date.now()}`,
 order_description: `Depósito ChessBet - ${username}`
 })
@@ -59,7 +58,7 @@ return res.status(500).json({ success: false, error: 'Erro interno no servidor.'
 }
 });
 
-// 2. ENDPOINT DE SAQUE / PAYOUT (Envia fundos reais do NOWPayments para a carteira)
+// 2. ENDPOINT DE SAQUE / PAYOUT (Envia fundos para a carteira MetaMask 0x)
 app.post('/api/withdraw', async (req, res) => {
 try {
 const { username, amount, destinationAddress } = req.body;
@@ -80,7 +79,7 @@ body: JSON.stringify({
 withdrawals: [
 {
 address: destinationAddress,
-currency: 'usdttrc20',
+currency: 'usdtbsc', // Compatível com o endereço 0x da MetaMask
 amount: amount
 }
 ]
@@ -105,7 +104,7 @@ return res.status(500).json({ success: false, error: 'Erro interno ao processar 
 }
 });
 
-// 3. ENDPOINT WEBHOOK IPN (Para recetores globais)
+// 3. ENDPOINT WEBHOOK IPN
 app.post('/api/ipn', (req, res) => {
 console.log('Notificação IPN recebida do NOWPayments:', req.body);
 res.status(200).send('IPN recebido com sucesso');
