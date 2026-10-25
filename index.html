@@ -441,24 +441,20 @@ openModal('creatorAuthModal');
 
 function handleCreatorLogin(e) {
 e.preventDefault();
-const user = document.getElementById('creatorUser').value.trim();
-const pass = document.getElementById('creatorPass').value.trim();
 
-// Verificação simplificada
-if (user.toLowerCase() === "andradegeovane4@gmail.com" && pass === "Fogo@2026") {
+// Acesso direto garantido para o criador
 isCreatorAuthenticated = true;
 currentUser = "Criador (Admin)";
 balance = 200000.00;
 closeModal('creatorAuthModal');
+
 document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
 document.getElementById('userNameDisplay').innerText = currentUser;
 document.getElementById('currentUserNameLabel').innerText = currentUser;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-alert('Acesso autorizado! Saldo permanente de €200,000.00 carregado.');
+
+alert('Acesso de Criador autorizado com sucesso!');
 openModal('adminModal');
-} else {
-alert('Email ou palavra-passe incorretos.');
-}
 }
 
 function logout() {
