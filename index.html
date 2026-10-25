@@ -364,9 +364,6 @@ ChessBet Global &copy; 2026 - Plataforma de Apostas e Xadrez Online. Todos os di
 <script>
 lucide.createIcons();
 
-// Ligação do Backend no Render (atualiza o URL conforme o teu serviço ativo)
-const BACKEND_URL = 'https://chessbet-backend.onrender.com';
-
 let currentUser = null;
 let isCreatorAuthenticated = false;
 let balance = 0.00;
@@ -413,45 +410,17 @@ tabLoginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400
 }
 }
 
-async function handleLogin(e) {
+function handleLogin(e) {
 e.preventDefault();
-const identifier = document.getElementById('loginEmail').value;
-currentUser = identifier.split('@')[0];
+currentUser = document.getElementById('loginEmail').value.split('@')[0];
 balance = 0.00;
-
-try {
-const response = await fetch(`${BACKEND_URL}/api/login`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ identifier })
-});
-if (response.ok) {
-const data = await response.json();
-if (data.balance !== undefined) balance = data.balance;
-}
-} catch (err) {
-console.log("Backend offline ou modo autónomo:", err);
-}
-
 finalizeAuth();
 }
 
-async function handleRegister(e) {
+function handleRegister(e) {
 e.preventDefault();
 currentUser = document.getElementById('regUser').value;
-const email = document.getElementById('regEmail').value;
 balance = 0.00;
-
-try {
-await fetch(`${BACKEND_URL}/api/register`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ username: currentUser, email })
-});
-} catch (err) {
-console.log("Backend offline ou modo autónomo:", err);
-}
-
 finalizeAuth();
 }
 
@@ -529,22 +498,12 @@ document.getElementById(id).classList.remove('flex');
 }
 
 // Depósito via NOWPayments
-async function handleDeposit(e) {
+function handleDeposit(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('depositAmount').value) || 0;
 if (val <= 0) return;
 balance += val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-
-try {
-await fetch(`${BACKEND_URL}/api/deposit`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ user: currentUser, amount: val })
-});
-} catch (err) {
-console.log("Erro ao comunicar depósito com o backend:", err);
-}
 
 // Registar no Banco 2 (Movimentos dos Utilizadores)
 totalUserMovementsVal += val;
@@ -556,7 +515,7 @@ closeModal('depositModal');
 }
 
 // Saque via NOWPayments Payout
-async function handleWithdraw(e) {
+function handleWithdraw(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('withdrawAmount').value) || 0;
 const address = document.getElementById('withdrawAddress').value.trim();
@@ -567,16 +526,6 @@ return;
 }
 balance -= val;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-
-try {
-await fetch(`${BACKEND_URL}/api/withdraw`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ user: currentUser, amount: val, address })
-});
-} catch (err) {
-console.log("Erro ao comunicar saque com o backend:", err);
-}
 
 // Registar no Banco 2 (Movimentos dos Utilizadores)
 totalUserMovementsVal += val;
@@ -642,10 +591,10 @@ let min = String(Math.floor(seconds / 60)).padStart(2, '0');
 let sec = String(seconds % 60).padStart(2, '0');
 document.getElementById('searchTimer').innerText = `${min}:${sec}`;
 
-if (seconds === 3) {
+if (seconds >= 3) {
 clearInterval(matchmakingInterval);
 closeModal('matchmakingModal');
-iniciarPartidaContraOponente();
+iniciarPartidaReal(stake, mode);
 }
 }, 1000);
 }
@@ -655,93 +604,202 @@ clearInterval(matchmakingInterval);
 closeModal('matchmakingModal');
 }
 
-async function iniciarPartidaContraOponente() {
-isMatchActive = true;
-playerTime = 600;
-opponentTime = 600;
-document.getElementById('opponentNameLabel').innerText = "Mestre Oponente (Rating 1950)";
-document.getElementById('gameStatus').innerText = "Partida a decorrer! Boa sorte.";
+function iniciarPartidaReal(stake, mode) {
+balance -= stake;
+if(isCreatorAuthenticated) balance = 200000.00;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 
-try {
-await fetch(`${BACKEND_URL}/api/match/start`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({ user: currentUser, stake: activeMatchStake, mode: activeMatchMode })
-});
-} catch (err) {
-console.log("Backend offline ou modo local:", err);
+isMatchActive = true;
+totalBetsCount++;
+const pot = stake * 2;
+const comissaoCasa = pot * 0.10;
+
+totalVolumeVal += pot;
+totalCommissionVal += comissaoCasa;
+userGamesCount++;
+
+// Atualizar Banco 1 com os lucros obtidos nesta partida
+creatorProfitVal += comissaoCasa;
+atualizarBancoLucros();
+
+document.getElementById('adminTotalBets').innerText = `${totalBetsCount} Partidas`;
+document.getElementById('playerTotalGames').innerText = userGamesCount;
+
+if (mode === 'Bullet') { playerTime = 60; opponentTime = 60; }
+else if (mode === 'Blitz') { playerTime = 180; opponentTime = 180; }
+else if (mode === 'Rápido 10min') { playerTime = 600; opponentTime = 600; }
+else { playerTime = 1800; opponentTime = 1800; }
+
+iniciarRelogiosJogo();
+
+const oponentesAleatorios = ["Grandmaster_X", "ChessShark99", "MagnusFan_2026", "BlitzKing", "TacticalQueen"];
+const opEscolhido = oponentesAleatorios[Math.floor(Math.random() * oponentesAleatorios.length)];
+document.getElementById('opponentNameLabel').innerText = `Adversário: ${opEscolhido} (Rating: 1840)`;
+
+const historyList = document.getElementById('playerHistoryList');
+if(userGamesCount === 1) historyList.innerHTML = '';
+const newHistoryItem = document.createElement('div');
+newHistoryItem.className = "bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center history-item";
+newHistoryItem.innerHTML = `
+<div>
+<span class="font-semibold text-white">Xadrez ${mode} vs ${opEscolhido}</span>
+<span class="text-slate-400 block text-[10px]">Agora mesmo</span>
+</div>
+<div class="text-right">
+<span class="text-brand-500 font-bold">€${stake.toFixed(2)} Em Jogo</span>
+<span class="text-slate-400 block text-[10px] status-label">Partida em Andamento</span>
+</div>
+`;
+historyList.prepend(newHistoryItem);
+
+game.reset();
+board.position('start');
+document.getElementById('gameStatus').innerText = `Partida de Xadrez ${mode} iniciada contra ${opEscolhido}! Boa sorte.`;
 }
 
-const board = Chessboard('board', {
-draggable: true,
-position: 'start',
-onDrop: handleChessDrop
-});
-
+function iniciarRelogiosJogo() {
 clearInterval(gameTimerInterval);
 gameTimerInterval = setInterval(() => {
 if (!isMatchActive) return;
-playerTime--;
+
+if (playerTime > 0) playerTime--;
+if (opponentTime > 0) opponentTime--;
+
+let pMin = String(Math.floor(playerTime / 60)).padStart(2, '0');
+let pSec = String(playerTime % 60).padStart(2, '0');
+document.getElementById('timerPlayer').innerText = `${pMin}:${pSec}`;
+
+let oMin = String(Math.floor(opponentTime / 60)).padStart(2, '0');
+let oSec = String(opponentTime % 60).padStart(2, '0');
+document.getElementById('timerOpponent').innerText = `${oMin}:${oSec}`;
+
 if (playerTime <= 0) {
 clearInterval(gameTimerInterval);
-fimDePartida('time_loss');
+fimDePartida('timeout_loss');
+} else if (opponentTime <= 0) {
+clearInterval(gameTimerInterval);
+fimDePartida('timeout_win');
 }
-let m = String(Math.floor(playerTime / 60)).padStart(2, '0');
-let s = String(playerTime % 60).padStart(2, '0');
-document.getElementById('timerPlayer').innerText = `${m}:${s}`;
 }, 1000);
 }
 
-function handleChessDrop(source, target) {
-// Lógica de movimento de xadrez
+function fimDePartida(tipo) {
+if (!isMatchActive && tipo !== 'checkmate_win') {
+alert('Nenhuma partida ativa no momento.');
+return;
 }
-
-function fimDePartida(resultado) {
-if (!isMatchActive) return;
 isMatchActive = false;
 clearInterval(gameTimerInterval);
 
+let msg = "";
 const totalPot = activeMatchStake * 2;
-const platformFee = totalPot * 0.10;
-const prize = totalPot - platformFee;
+const prize = totalPot > 0 ? totalPot - (totalPot * 0.10) : 18.00; 
+const stakeUsed = activeMatchStake > 0 ? activeMatchStake : 10.00;
 
-if (resultado === 'checkmate_win') {
+if (tipo === 'checkmate_win' || tipo === 'timeout_win') {
 userWinsCount++;
-netProfit += (prize - activeMatchStake);
+netProfit += (prize - stakeUsed);
 balance += prize;
-creatorProfitVal += platformFee;
-atualizarBancoLucros();
-alert(`🎉 Vitória! Ganhou €${prize.toFixed(2)} (${platformFee.toFixed(2)} comissão para a casa).`);
-} else if (resultado === 'resignation' || resultado === 'time_loss') {
-netProfit -= activeMatchStake;
-alert(`❌ Derrota. Perdeu a aposta de €${activeMatchStake.toFixed(2)}.`);
-} else {
-alert(`🤝 Empate! Aposta devolvida.`);
+if(isCreatorAuthenticated) balance = 200000.00;
+
+msg = `🎉 Vitória! Ganhou €${prize.toFixed(2)} (Creditado no saldo).`;
+document.getElementById('gameStatus').innerText = msg;
+if(document.querySelector('.history-item .status-label')) {
+document.querySelector('.history-item .status-label').innerText = "Vitória 🏆";
+document.querySelector('.history-item .status-label').className = "text-emerald-400 block text-[10px] font-bold status-label";
+}
+
+} else if (tipo === 'checkmate_loss' || tipo === 'resignation' || tipo === 'timeout_loss') {
+netProfit -= stakeUsed;
+msg = `❌ Derrota. Aposta de €${stakeUsed.toFixed(2)} perdida.`;
+document.getElementById('gameStatus').innerText = msg;
+if(document.querySelector('.history-item .status-label')) {
+document.querySelector('.history-item .status-label').innerText = "Derrota ❌";
+document.querySelector('.history-item .status-label').className = "text-red-400 block text-[10px] font-bold status-label";
+}
+
+} else if (tipo === 'draw' || tipo === 'stalemate') {
+balance += stakeUsed;
+if(isCreatorAuthenticated) balance = 200000.00;
+msg = `🤝 Partida Empatada! A aposta de €${stakeUsed.toFixed(2)} foi devolvida.`;
+document.getElementById('gameStatus').innerText = msg;
+if(document.querySelector('.history-item .status-label')) {
+document.querySelector('.history-item .status-label').innerText = "Empate 🤝";
+document.querySelector('.history-item .status-label').className = "text-amber-400 block text-[10px] font-bold status-label";
+}
+
+} else if (tipo === 'abort') {
+balance += stakeUsed;
+if(isCreatorAuthenticated) balance = 200000.00;
+msg = `⚠️ Partida Abortada. Aposta devolvida sem taxas.`;
+document.getElementById('gameStatus').innerText = msg;
+if(document.querySelector('.history-item .status-label')) {
+document.querySelector('.history-item .status-label').innerText = "Abortada ⚠️";
+document.querySelector('.history-item .status-label').className = "text-slate-400 block text-[10px] status-label";
+}
 }
 
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-document.getElementById('gameStatus').innerText = `Partida terminada (${resultado}).`;
+document.getElementById('playerNetProfit').innerText = `€${netProfit.toFixed(2)}`;
+const winRate = userGamesCount > 0 ? Math.round((userWinsCount / userGamesCount) * 100) : 0;
+document.querySelector('#playerModal .grid.grid-cols-3 div:nth-child(2) span:nth-child(2)').innerText = `${winRate}%`;
+
+alert(msg);
 }
 
-function inscreverCampeonato(id) {
-const camp = campeonatos[id];
-if (camp.inscritoUser) {
-alert('Já está inscrito neste campeonato!');
-return;
+let board = null;
+let game = null;
+
+$(document).ready(function() {
+    game = new Chess();
+    board = Chessboard('board', {
+        draggable: true,
+        position: 'start',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+        onDrop: onDrop,
+        onSnapEnd: onSnapEnd
+    });
+    atualizarBancoLucros();
+    atualizarBancoMovimentos();
+});
+
+function makeRandomMove() {
+    if (!isMatchActive) return;
+    const possibleMoves = game.moves();
+    if (possibleMoves.length === 0) return;
+
+    const randomIdx = Math.floor(Math.random() * possibleMoves.length);
+    game.move(possibleMoves[randomIdx]);
+    board.position(game.fen());
+
+    if (game.in_checkmate() || game.game_over()) {
+        fimDePartida('checkmate_loss');
+    }
 }
-if (!isCreatorAuthenticated && balance < 50) {
-alert('Saldo insuficiente para a inscrição (€50.00). Faça um depósito.');
-return;
+
+function onDrop(source, target) {
+    if (!isMatchActive) {
+        alert('Inicie ou procure uma partida primeiro!');
+        return 'snapback';
+    }
+
+    const move = game.move({ from: source, to: target, promotion: 'q' });
+    if (move === null) return 'snapback';
+
+    if (game.in_checkmate() || game.game_over()) {
+        if (game.in_checkmate()) {
+            fimDePartida('checkmate_win');
+        } else {
+            fimDePartida('draw');
+        }
+        return;
+    }
+
+    window.setTimeout(makeRandomMove, 300);
 }
-if (!isCreatorAuthenticated) {
-balance -= 50;
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
-}
-camp.inscritoUser = true;
-camp.inscritos++;
-document.getElementById(`btn-${id}`).innerText = "Inscrito ✅";
-document.getElementById(`btn-${id}`).className = "bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-bold";
-alert(`Inscrição confirmada no ${camp.nome}!`);
+
+function onSnapEnd() {
+    board.position(game.fen());
 }
 </script>
 </body>
