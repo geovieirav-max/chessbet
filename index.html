@@ -444,6 +444,7 @@ e.preventDefault();
 const user = document.getElementById('creatorUser').value.trim();
 const pass = document.getElementById('creatorPass').value.trim();
 
+// Verificação exata das credenciais do criador
 if (user === "andradegeovane4@gmail.com" && pass === "Fogo@2026") {
 isCreatorAuthenticated = true;
 currentUser = "Criador (Admin)";
@@ -456,7 +457,8 @@ document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 alert('Acesso autorizado! Saldo permanente de €200,000.00 carregado.');
 openModal('adminModal');
 } else {
-alert('Credenciais incorretas!');
+alert('Credenciais incorretas! Verifique o email (andradegeovane4@gmail.com) e a palavra-passe (Fogo@2026).');
+}
 }
 }
 
