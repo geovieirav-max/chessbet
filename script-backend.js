@@ -1,9 +1,9 @@
-// Configuração do Backend no Render
 const BACKEND_URL = 'https://chessbet-backend.onrender.com';
 
-// Função de Depósito Automatizada
+// Função de Depósito REAL (Abre o Checkout do NOWPayments)
 async function handleDeposit(event) {
 if (event) event.preventDefault();
+
 const amountInput = document.getElementById('depositAmount');
 const amount = amountInput ? parseFloat(amountInput.value) : 0;
 
@@ -24,30 +24,32 @@ amount: amount
 
 const data = await response.json();
 
-if (response.ok && data.success) {
-alert(`Sucesso! ${data.message}`);
+if (response.ok && data.success && data.invoice_url) {
+alert('A redirecionar para a página de pagamento seguro do NOWPayments...');
+// ABRIR A PÁGINA REAL DE PAGAMENTO DO NOWPAYMENTS
+window.open(data.invoice_url, '_blank');
 try { closeModal('depositModal'); } catch(e) {}
 } else {
-alert('Erro: ' + (data.error || 'Não foi possível processar o depósito.'));
+alert('Erro no NOWPayments: ' + (data.error || 'Não foi possível gerar a fatura real.'));
 }
 } catch (error) {
-console.error('Erro de ligação ao backend:', error);
-alert('Erro ao ligar ao servidor backend no Render.');
+console.error('Erro de ligação:', error);
+alert('Erro ao comunicar com o servidor do Render.');
 }
 }
 
-// Função de Saque Automatizada
+// Função de Saque REAL (Chama a API de Payouts)
 async function handleWithdraw(event) {
 if (event) event.preventDefault();
 
-const amountInput = document.getElementById('withdrawAmount') || document.querySelector('input[type="number"]');
-const addressInput = document.getElementById('withdrawAddress') || document.querySelector('input[type="text"]');
+const amountInput = document.getElementById('withdrawAmount');
+const addressInput = document.getElementById('withdrawAddress');
 
 const amount = amountInput ? parseFloat(amountInput.value) : 0;
-const destinationAddress = addressInput ? addressInput.value.trim() : 'carteira_padrao';
+const destinationAddress = addressInput ? addressInput.value.trim() : '';
 
-if (!amount || amount <= 0) {
-alert('Por favor, insira um montante válido para saque.');
+if (!amount || amount <= 0 || !destinationAddress) {
+alert('Por favor, preencha o montante e a carteira de destino (ex: USDT TRC20).');
 return;
 }
 
@@ -65,28 +67,27 @@ destinationAddress: destinationAddress
 const data = await response.json();
 
 if (response.ok && data.success) {
-alert(data.message);
+alert(`Sucesso! Saque de €${amount} enviado para a carteira ${destinationAddress}`);
 try { closeModal('withdrawModal'); } catch(e) {}
 } else {
-alert('Erro no saque: ' + (data.error || 'Falha ao processar o pedido.'));
+alert('Erro no Payout: ' + (data.error || 'Falha ao processar o saque real.'));
 }
 } catch (error) {
-console.error('Erro de ligação ao backend:', error);
-alert('Erro ao comunicar com o servidor backend.');
+console.error('Erro de ligação:', error);
+alert('Erro ao comunicar com o servidor.');
 }
 }
 
-// Interceção automática dos formulários de depósito e saque se existirem na página
+// Ligar as funções aos botões do portal
 document.addEventListener('DOMContentLoaded', () => {
-const depositForm = document.querySelector('form[onsubmit*="deposit"], #depositModal form');
-if (depositForm && !depositForm.hasAttribute('data-bound')) {
-depositForm.setAttribute('data-bound', 'true');
-depositForm.addEventListener('submit', handleDeposit);
+const depositForm = document.querySelector('#depositModal form');
+if (depositForm) {
+depositForm.onsubmit = handleDeposit;
 }
 
-const withdrawForm = document.querySelector('form[onsubmit*="withdraw"], #withdrawModal form');
-if (withdrawForm && !withdrawForm.hasAttribute('data-bound')) {
-withdrawForm.setAttribute('data-bound', 'true');
-withdrawForm.addEventListener('submit', handleWithdraw);
+const withdrawForm = document.querySelector('#withdrawModal form');
+if (withdrawForm) {
+withdrawForm.onsubmit = handleWithdraw;
 }
 });
+
