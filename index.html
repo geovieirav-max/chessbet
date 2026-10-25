@@ -441,24 +441,38 @@ openModal('creatorAuthModal');
 
 function handleCreatorLogin(e) {
 e.preventDefault();
-const user = document.getElementById('creatorUser').value.trim();
-const pass = document.getElementById('creatorPass').value.trim();
 
+// Captura os valores de forma segura (procurando por ID ou pelos inputs do modal aberto)
+const userInputElem = document.getElementById('creatorUser') || document.querySelector('input[type="email"]');
+const passInputElem = document.getElementById('creatorPass') || document.querySelector('input[type="password"]');
+
+const user = userInputElem ? userInputElem.value.trim().toLowerCase() : "";
+const pass = passInputElem ? passInputElem.value.trim() : "";
+
+// Validação das tuas credenciais exatas
 if (user === "andradegeovane4@gmail.com" && pass === "Fogo@2026") {
 isCreatorAuthenticated = true;
 currentUser = "Criador (Admin)";
 balance = 200000.00;
-closeModal('creatorAuthModal');
-document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
-document.getElementById('userNameDisplay').innerText = currentUser;
-document.getElementById('currentUserNameLabel').innerText = currentUser;
-document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
+
+// Fecha o modal de autenticação se estiver aberto
+try { closeModal('creatorAuthModal'); } catch(err) {}
+
+// Atualiza os elementos visuais da interface
+if (document.getElementById('creatorBtnText')) document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
+if (document.getElementById('userNameDisplay')) document.getElementById('userNameDisplay').innerText = currentUser;
+if (document.getElementById('currentUserNameLabel')) document.getElementById('currentUserNameLabel').innerText = currentUser;
+if (document.getElementById('userBalance')) document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
+
 alert('Acesso autorizado! Saldo permanente de €200,000.00 carregado.');
-openModal('adminModal');
+
+// Abre o painel de administração
+try { openModal('adminModal'); } catch(err) {}
 } else {
-alert('Credenciais incorretas! Verifique o email e a palavra-passe.');
+alert('Credenciais incorretas! Certifique-se de usar andradegeovane4@gmail.com e Fogo@2026.');
 }
 }
+
 
 function logout() {
 currentUser = null;
