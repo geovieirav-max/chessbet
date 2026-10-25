@@ -1,5 +1,4 @@
 const express = require('express');
-const axios = require('axios');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -7,114 +6,114 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Porta do servidor (o Render atribui uma porta automaticamente ou usa a porta 3000)
-const PORT = process.env.PORT || 3000;
-
-// Configuração da API da NOWPayments (utiliza a variável de ambiente do Render)
-const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY || "SUA_API_KEY_AQUI";
+// Chave da API obtida nas variáveis de ambiente do Render
+const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
 const NOWPAYMENTS_API_URL = 'https://api.nowpayments.io/v1';
 
-// Dados administrativos registados
-const ADMIN_CONFIG = {
-email: "andradegeovane4@gmail.com",
-bancoPrincipalIBAN: "CV64000200003755858210123", // Caixa Económica de Cabo Verde
-bancoNome: "Caixa Económica de Cabo Verde"
-};
-
-// ----------------------------------------------------
-// 1. ENDPOINT DE DEPÓSITO
-// ----------------------------------------------------
+// 1. ENDPOINT DE DEPÓSITO (Cria fatura real no NOWPayments)
 app.post('/api/deposit', async (req, res) => {
 try {
 const { username, amount } = req.body;
 
 if (!amount || amount <= 0) {
-return res.status(400).json({ success: false, error: 'Valor de depósito inválido.' });
+return res.status(400).json({ success: false, error: 'Montante inválido.' });
 }
 
-console.log(`[Depósito] Utilizador: ${username || 'Convidado'} | Montante: €${amount}`);
+console.log(`A criar fatura real no NOWPayments para o utilizador ${username}, montante: €${amount}`);
 
-// Aqui podes integrar a criação de uma invoice real na NOWPayments se desejado
-return res.status(200).json({
-success: true,
-message: `Depósito de €${amount} registado com sucesso.`,
-amount
+// Chamada real à API de faturas do NOWPayments
+const response = await fetch(`${NOWPAYMENTS_API_URL}/invoice`, {
+method: 'POST',
+headers: {
+'x-api-key': NOWPAYMENTS_API_KEY,
+'Content-Type': 'application/json'
+},
+body: JSON.stringify({
+price_amount: amount,
+price_currency: 'eur', // Moeda base do portal
+pay_currency: 'usdttrc20', // Criptomoeda para pagamento (USDT na rede TRC20)
+order_id: `dep_${username}_${Date.now()}`,
+order_description: `Depósito ChessBet - ${username}`,
+ipn_url: `${process.env.RENDER_EXTERNAL_URL || 'https://chessbet-backend.onrender.com'}/api/ipn`
+})
 });
+
+const data = await response.json();
+console.log('Resposta do NOWPayments (Invoice):', data);
+
+if (response.ok && data.invoice_url) {
+return res.json({
+success: true,
+message: 'Fatura criada com sucesso!',
+invoice_url: data.invoice_url
+});
+} else {
+return res.status(500).json({
+success: false,
+error: data.message || 'Erro ao gerar fatura real no NOWPayments.'
+});
+}
 
 } catch (error) {
-console.error("Erro no depósito:", error.message);
-return res.status(500).json({ success: false, error: 'Erro interno ao processar depósito.' });
+console.error('Erro no servidor /api/deposit:', error);
+return res.status(500).json({ success: false, error: 'Erro interno no servidor.' });
 }
 });
 
-// ----------------------------------------------------
-// 2. ENDPOINT DE SAQUE (PAYOUT VIA NOWPAYMENTS)
-// ----------------------------------------------------
+// 2. ENDPOINT DE SAQUE / PAYOUT (Envia fundos reais do NOWPayments para a carteira)
 app.post('/api/withdraw', async (req, res) => {
 try {
 const { username, amount, destinationAddress } = req.body;
 
-if (!amount || amount <= 0) {
-return res.status(400).json({ success: false, error: 'Montante de saque inválido.' });
+if (!amount || amount <= 0 || !destinationAddress) {
+return res.status(400).json({ success: false, error: 'Dados de saque incompletos.' });
 }
 
-if (!destinationAddress) {
-return res.status(400).json({ success: false, error: 'Endereço de destino de criptomoeda em falta.' });
-}
+console.log(`A processar saque real para ${username}, montante: €${amount}, destino: ${destinationAddress}`);
 
-console.log(`[Saque] A processar €${amount} para o endereço ${destinationAddress} (Utilizador: ${username})`);
-
-/*
-EXEMPLO DE INTEGRAÇÃO COM A API DE PAYOUTS DA NOWPAYMENTS:
-Nota: Para saques automáticos reais, a NOWPayments exige saldo pré-depositado
-na conta deles ou uma chave de payout ativa.
-*/
-
-/*
-const payoutResponse = await axios.post(
-`${NOWPAYMENTS_API_URL}/payout`,
-{
-// Configuração do payout para a carteira do utilizador
-withdrawals: [
-{
-address: destinationAddress,
-currency: "usdttrc20", // Exemplo: USDT na rede TRC20
-amount: amount
-}
-]
-},
-{
+const response = await fetch(`${NOWPAYMENTS_API_URL}/payout`, {
+method: 'POST',
 headers: {
 'x-api-key': NOWPAYMENTS_API_KEY,
 'Content-Type': 'application/json'
+},
+body: JSON.stringify({
+withdrawals: [
+{
+address: destinationAddress,
+currency: 'usdttrc20',
+amount: amount,
+ipn_url: `${process.env.RENDER_EXTERNAL_URL || 'https://chessbet-backend.onrender.com'}/api/ipn`
 }
-}
-);
-*/
-
-// Simulação de sucesso da transação de payout
-return res.status(200).json({
-success: true,
-message: `Saque de €${amount.toFixed(2)} processado com sucesso via payout automático!`,
-newBalance: 0, // Ajustar conforme a lógica do saldo do utilizador
-destination: destinationAddress,
-bancoAdministrativoRegisto: ADMIN_CONFIG.bancoPrincipalIBAN
+]
+})
 });
+
+const data = await response.json();
+console.log('Resposta do NOWPayments (Payout):', data);
+
+if (response.ok) {
+return res.json({
+success: true,
+message: `Saque de €${amount} processado com sucesso para a carteira ${destinationAddress}!`
+});
+} else {
+return res.status(500).json({ success: false, error: data.message || 'Falha ao processar o payout no NOWPayments.' });
+}
 
 } catch (error) {
-console.error("Erro no payout NOWPayments:", error.response?.data || error.message);
-return res.status(500).json({
-success: false,
-error: 'Falha na comunicação com o serviço de pagamentos NOWPayments.'
-});
+console.error('Erro no servidor /api/withdraw:', error);
+return res.status(500).json({ success: false, error: 'Erro interno ao processar o saque.' });
 }
 });
 
-// Rota de teste para verificar se o servidor está ativo
-app.get('/', (req, res) => {
-res.send('ChessBet Global Backend a funcionar corretamente!');
+// 3. ENDPOINT WEBHOOK IPN (Recebe confirmações automáticas de pagamento)
+app.post('/api/ipn', (req, res) => {
+console.log('Notificação IPN recebida do NOWPayments:', req.body);
+res.status(200).send('IPN recebido com sucesso');
 });
 
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
 console.log(`Servidor backend a correr na porta ${PORT}`);
 });
