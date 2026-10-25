@@ -21,7 +21,7 @@ return res.status(400).json({ success: false, error: 'Montante inválido.' });
 
 console.log(`A criar fatura real no NOWPayments para o utilizador ${username}, montante: €${amount}`);
 
-// Chamada real à API de faturas do NOWPayments
+// Chamada à API de faturas do NOWPayments (sem ipn_url direto no body)
 const response = await fetch(`${NOWPAYMENTS_API_URL}/invoice`, {
 method: 'POST',
 headers: {
@@ -30,11 +30,10 @@ headers: {
 },
 body: JSON.stringify({
 price_amount: amount,
-price_currency: 'eur', // Moeda base do portal
-pay_currency: 'usdttrc20', // Criptomoeda para pagamento (USDT na rede TRC20)
+price_currency: 'eur',
+pay_currency: 'usdttrc20',
 order_id: `dep_${username}_${Date.now()}`,
-order_description: `Depósito ChessBet - ${username}`,
-ipn_url: `${process.env.RENDER_EXTERNAL_URL || 'https://chessbet-backend.onrender.com'}/api/ipn`
+order_description: `Depósito ChessBet - ${username}`
 })
 });
 
@@ -82,8 +81,7 @@ withdrawals: [
 {
 address: destinationAddress,
 currency: 'usdttrc20',
-amount: amount,
-ipn_url: `${process.env.RENDER_EXTERNAL_URL || 'https://chessbet-backend.onrender.com'}/api/ipn`
+amount: amount
 }
 ]
 })
@@ -107,7 +105,7 @@ return res.status(500).json({ success: false, error: 'Erro interno ao processar 
 }
 });
 
-// 3. ENDPOINT WEBHOOK IPN (Recebe confirmações automáticas de pagamento)
+// 3. ENDPOINT WEBHOOK IPN (Para recetores globais)
 app.post('/api/ipn', (req, res) => {
 console.log('Notificação IPN recebida do NOWPayments:', req.body);
 res.status(200).send('IPN recebido com sucesso');
