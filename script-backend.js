@@ -1,95 +1,97 @@
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
+// Configuração do URL do Backend no Render
+const BACKEND_URL = 'https://chessbet-backend.onrender.com';
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+// 1. Função de Depósito REAL (Abre a fatura do NOWPayments)
+async function handleDeposit(event) {
+  if (event) event.preventDefault();
 
-// A tua chave de API do NOWPayments guardada nas variáveis de ambiente do Render
-const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
-const NOWPAYMENTS_BASE_URL = 'https://api.nowpayments.io/v1';
+  const amountInput = document.getElementById('depositAmount');
+  const amount = amountInput ? parseFloat(amountInput.value) : 0;
 
-// 1. ROTA DE DEPÓSITO REAL (Gera Invoice)
-app.post('/api/deposit', async (req, res) => {
-  try {
-    const { amount, username } = req.body;
-
-    if (!amount || amount <= 0) {
-      return res.status(400).json({ success: false, error: 'Montante inválido.' });
-    }
-
-    // Chamada à API da NOWPayments para criar fatura
-    const response = await axios.post(`${NOWPAYMENTS_BASE_URL}/invoice`, {
-      price_amount: amount,
-      price_currency: 'usd',
-      pay_currency: 'usdtbsc', // USDT na rede BNB Smart Chain (compatível com MetaMask)
-      order_id: `deposito_${username}_${Date.now()}`,
-      ipn_callback_url: 'https://chessbet-backend.onrender.com/api/ipn'
-    }, {
-      headers: {
-        'x-api-key': NOWPAYMENTS_API_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    return res.json({
-      success: true,
-      invoice_url: response.data.invoice_url
-    });
-
-  } catch (error) {
-    console.error('Erro no Depósito:', error.response?.data || error.message);
-    return res.status(500).json({
-      success: false,
-      error: error.response?.data?.message || 'Falha ao gerar fatura real no NOWPayments.'
-    });
+  if (!amount || amount <= 0) {
+    alert('Por favor, insira um valor válido para depósito.');
+    return;
   }
-});
 
-// 2. ROTA DE SAQUE REAL (Payout via Custody)
-app.post('/api/withdraw', async (req, res) => {
   try {
-    const { amount, destinationAddress, username } = req.body;
+    const response = await fetch(`${BACKEND_URL}/api/deposit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: typeof currentUser !== 'undefined' ? currentUser : 'Geovane',
+        amount: amount
+      })
+    });
 
-    if (!amount || amount <= 0 || !destinationAddress) {
-      return res.status(400).json({ success: false, error: 'Dados de saque incompletos.' });
+    const data = await response.json();
+
+    if (response.ok && data.success && data.invoice_url) {
+      alert('A redirecionar para o pagamento seguro via NOWPayments...');
+      window.open(data.invoice_url, '_blank');
+      try { closeModal('depositModal'); } catch(e) {}
+    } else {
+      alert('Erro no Depósito: ' + (data.error || 'Não foi possível gerar a fatura real.'));
     }
-
-    // Chamada à API de Payouts da NOWPayments
-    const response = await axios.post(`${NOWPAYMENTS_BASE_URL}/payout`, {
-      withdrawals: [
-        {
-          address: destinationAddress, // Carteira MetaMask (0x...)
-          amount: amount,
-          currency: 'usdtbsc',         // Envio de USDT pela rede BSC
-          ipn_callback_url: 'https://chessbet-backend.onrender.com/api/ipn'
-        }
-      ]
-    }, {
-      headers: {
-        'x-api-key': NOWPAYMENTS_API_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    return res.json({
-      success: true,
-      message: 'Saque real processado com sucesso na blockchain!',
-      data: response.data
-    });
-
   } catch (error) {
-    console.error('Erro no Saque:', error.response?.data || error.message);
-    return res.status(500).json({
-      success: false,
-      error: error.response?.data?.message || 'Erro ao comunicar com a API de Payouts.'
-    });
+    console.error('Erro de ligação ao servidor:', error);
+    alert('Erro ao comunicar com o servidor do Render.');
   }
-});
+}
 
-// Inicialização do servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor ChessBet a rodar na porta ${PORT}`);
+// 2. Função de Saque REAL (Sem simulações, comunica com o Payouts da NOWPayments)
+async function handleWithdraw(event) {
+  if (event) event.preventDefault();
+
+  const amountInput = document.getElementById('withdrawAmount');
+  const addressInput = document.getElementById('withdrawAddress');
+
+  const amount = amountInput ? parseFloat(amountInput.value) : 0;
+  const destinationAddress = addressInput ? addressInput.value.trim() : '';
+
+  if (!amount || amount <= 0 || !destinationAddress) {
+    alert('Por favor, preencha o montante e a carteira de destino (ex: carteira MetaMask 0x...).');
+    return;
+  }
+
+  try {
+    // Alerta informativo real enquanto o servidor processa a chamada
+    alert('A processar o pedido de saque real... Aguarde a confirmação da rede.');
+
+    const response = await fetch(`${BACKEND_URL}/api/withdraw`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: typeof currentUser !== 'undefined' ? currentUser : 'Geovane',
+        amount: amount,
+        destinationAddress: destinationAddress
+      })
+    });
+
+    const data = await response.json();
+
+    // SÓ mostra sucesso se o backend confirmar que a API do NOWPayments aceitou a transação
+    if (response.ok && data.success) {
+      alert(`Sucesso! Saque de €${amount} processado para a carteira ${destinationAddress}.`);
+      try { closeModal('withdrawModal'); } catch(e) {}
+    } else {
+      // Devolve o erro real (ex: saldo insuficiente no Custody, erro de rede, etc.)
+      alert('Erro no Saque: ' + (data.error || 'Falha ao processar a transferência real.'));
+    }
+  } catch (error) {
+    console.error('Erro de ligação ao servidor:', error);
+    alert('Erro ao comunicar com o servidor do Render.');
+  }
+}
+
+// 3. Associar as funções aos formulários e botões do portal
+document.addEventListener('DOMContentLoaded', () => {
+  const depositForm = document.querySelector('#depositModal form');
+  if (depositForm) {
+    depositForm.onsubmit = handleDeposit;
+  }
+
+  const withdrawForm = document.querySelector('#withdrawModal form');
+  if (withdrawForm) {
+    withdrawForm.onsubmit = handleWithdraw;
+  }
 });
