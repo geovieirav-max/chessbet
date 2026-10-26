@@ -329,26 +329,41 @@ Selecione a modalidade, o valor da aposta e clique em "Procurar Oponente 1v1".
 </div>
 </div>
 
-<!-- MODAL DE DEPÓSITO (NOWPAYMENTS / CRIPTO) -->
+<!-- ========================================== -->
+<!-- MODAL DE DEPÓSITO (LIMPO / NATIVO) -->
+<!-- ========================================== -->
 <div id="depositModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-<div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
-<button onclick="closeModal('depositModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
-<h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="credit-card" class="text-brand-500"></i> Depósito via NOWPayments (USDT/Cripto)</h3>
-<p class="text-xs text-slate-400 mb-4">Insira o montante. Os fundos são direcionados para a conta comercial central.</p>
-<form onsubmit="handleDeposit(event)" class="space-y-4">
-<div><label class="text-xs text-slate-300 font-medium">Valor a Depositar (€ / USDT)</label><input type="number" id="depositAmount" required min="1" step="any" value="50" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500"></div>
-<button type="submit" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm">Gerar Pagamento NOWPayments</button>
-    <button id="btn-pagar" onclick="iniciarPagamentoCripto(document.getElementById('depositAmount').value)">Pagar com Criptomoeda</button>
-</form>
-</div>
+    <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
+        <button onclick="closeModal('depositModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
+        <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="wallet" class="text-brand-500"></i> Depositar Fundos</h3>
+        <p class="text-xs text-slate-400 mb-4">Insira o montante desejado. O pagamento é processado de forma segura.</p>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="text-xs text-slate-300 font-medium">Valor a Depositar (€ / USDT)</label>
+                <input type="number" id="depositAmount" required placeholder="Ex: 50" class="w-full bg-dark-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
+            </div>
+            
+            <div class="bg-dark-950/50 border border-slate-800/60 rounded-xl p-3 text-xs text-slate-400 flex items-center gap-2">
+                <i data-lucide="shield-check" class="w-4 h-4 text-emerald-500 shrink-0"></i>
+                <span>Transação encriptada e validada automaticamente pelo sistema.</span>
+            </div>
+
+            <button id="btn-pagar" onclick="iniciarPagamentoCripto(document.getElementById('depositAmount').value)" class="w-full bg-brand-500 hover:bg-brand-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 cursor-pointer">
+                <i data-lucide="external-link" class="w-4 h-4"></i> Prosseguir para Pagamento
+            </button>
+        </div>
+    </div>
 </div>
 
-<!-- MODAL DE SAQUE (IBAN / BANCÁRIO) -->
+<!-- ========================================== -->
+<!-- MODAL DE SAQUE (CARTÃO / CONTA CV) -->
+<!-- ========================================== -->
 <div id="withdrawModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
     <div class="bg-dark-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 relative">
         <button onclick="closeModal('withdrawModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i data-lucide="x"></i></button>
-        <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="arrow-up-right" class="text-emerald-500"></i> Levantamento Bancário (IBAN)</h3>
-        <p class="text-xs text-slate-400 mb-4">O prémio é transferido diretamente para a sua conta bancária.</p>
+        <h3 class="text-lg font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="credit-card" class="text-amber-500"></i> Sacar para Cartão / Conta CV</h3>
+        <p class="text-xs text-slate-400 mb-4">O prémio é transferido diretamente para a sua conta ou cartão bancário em Cabo Verde.</p>
         
         <form onsubmit="handleWithdraw(event)" class="space-y-4">
             <div>
@@ -356,6 +371,27 @@ Selecione a modalidade, o valor da aposta e clique em "Procurar Oponente 1v1".
                 <input type="number" id="withdrawAmount" required placeholder="Ex: 50" class="w-full bg-dark-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
             </div>
             <div>
+                <label class="text-xs text-slate-300 font-medium">Nome do Titular da Conta</label>
+                <input type="text" id="withdrawName" required placeholder="Nome completo" class="w-full bg-dark-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
+            </div>
+            <div>
+                <label class="text-xs text-slate-300 font-medium">Banco de Destino</label>
+                <select id="withdrawBank" class="w-full bg-dark-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
+                    <option value="Caixa Económica de Cabo Verde">Caixa Económica de Cabo Verde</option>
+                    <option value="Banco Comercial do Atlântico (BCA)">Banco Comercial do Atlântico (BCA)</option>
+                    <option value="Outro Banco CV">Outro Banco / Instituição</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs text-slate-300 font-medium">Nº de Conta, IBAN ou Nº do Cartão</label>
+                <input type="text" id="withdrawAccountDetails" required placeholder="Ex: CV64... ou Nº do Cartão" class="w-full bg-dark-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
+            </div>
+            <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-dark-950 font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 cursor-pointer">
+                <i data-lucide="send" class="w-4 h-4"></i> Confirmar Saque para Cartão / Conta
+            </button>
+        </form>
+    </div>
+</div>
                 <label class="text-xs text-slate-300 font-medium">Nome do Titular da Conta</label>
                 <input type="text" id="withdrawName" required placeholder="Nome completo" class="w-full bg-dark-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-brand-500">
             </div>
