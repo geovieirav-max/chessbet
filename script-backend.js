@@ -1,132 +1,95 @@
-const BACKEND_URL = 'https://chessbet-backend.onrender.com';
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
 
-// Função de Depósito REAL (Abre o Checkout do NOWPayments)
-async function handleDeposit(event) {
-if (event) event.preventDefault();
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-const amountInput = document.getElementById('depositAmount');
-const amount = amountInput ? parseFloat(amountInput.value) : 0;
+// A tua chave de API do NOWPayments guardada nas variáveis de ambiente do Render
+const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY;
+const NOWPAYMENTS_BASE_URL = 'https://api.nowpayments.io/v1';
 
-if (!amount || amount <= 0) {
-alert('Por favor, insira um valor válido para depósito.');
-return;
-}
+// 1. ROTA DE DEPÓSITO REAL (Gera Invoice)
+app.post('/api/deposit', async (req, res) => {
+  try {
+    const { amount, username } = req.body;
 
-try {
-const response = await fetch(`${BACKEND_URL}/api/deposit`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
-username: typeof currentUser !== 'undefined' ? currentUser : 'Geovane',
-amount: amount
-})
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'Montante inválido.' });
+    }
+
+    // Chamada à API da NOWPayments para criar fatura
+    const response = await axios.post(`${NOWPAYMENTS_BASE_URL}/invoice`, {
+      price_amount: amount,
+      price_currency: 'usd',
+      pay_currency: 'usdtbsc', // USDT na rede BNB Smart Chain (compatível com MetaMask)
+      order_id: `deposito_${username}_${Date.now()}`,
+      ipn_callback_url: 'https://chessbet-backend.onrender.com/api/ipn'
+    }, {
+      headers: {
+        'x-api-key': NOWPAYMENTS_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return res.json({
+      success: true,
+      invoice_url: response.data.invoice_url
+    });
+
+  } catch (error) {
+    console.error('Erro no Depósito:', error.response?.data || error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.response?.data?.message || 'Falha ao gerar fatura real no NOWPayments.'
+    });
+  }
 });
 
-const data = await response.json();
+// 2. ROTA DE SAQUE REAL (Payout via Custody)
+app.post('/api/withdraw', async (req, res) => {
+  try {
+    const { amount, destinationAddress, username } = req.body;
 
-if (response.ok && data.success && data.invoice_url) {
-alert('A redirecionar para a página de pagamento seguro do NOWPayments...');
-// ABRIR A PÁGINA REAL DE PAGAMENTO DO NOWPAYMENTS
-window.open(data.invoice_url, '_blank');
-try { closeModal('depositModal'); } catch(e) {}
-} else {
-alert('Erro no NOWPayments: ' + (data.error || 'Não foi possível gerar a fatura real.'));
-}
-} catch (error) {
-console.error('Erro de ligação:', error);
-alert('Erro ao comunicar com o servidor do Render.');
-}
-}
+    if (!amount || amount <= 0 || !destinationAddress) {
+      return res.status(400).json({ success: false, error: 'Dados de saque incompletos.' });
+    }
 
-// Função de Saque REAL (Chama a API de Payouts)
-async function handleWithdraw(event) {
-if (event) event.preventDefault();
+    // Chamada à API de Payouts da NOWPayments
+    const response = await axios.post(`${NOWPAYMENTS_BASE_URL}/payout`, {
+      withdrawals: [
+        {
+          address: destinationAddress, // Carteira MetaMask (0x...)
+          amount: amount,
+          currency: 'usdtbsc',         // Envio de USDT pela rede BSC
+          ipn_callback_url: 'https://chessbet-backend.onrender.com/api/ipn'
+        }
+      ]
+    }, {
+      headers: {
+        'x-api-key': NOWPAYMENTS_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
 
-const amountInput = document.getElementById('withdrawAmount');
-const addressInput = document.getElementById('withdrawAddress');
+    return res.json({
+      success: true,
+      message: 'Saque real processado com sucesso na blockchain!',
+      data: response.data
+    });
 
-const amount = amountInput ? parseFloat(amountInput.value) : 0;
-const destinationAddress = addressInput ? addressInput.value.trim() : '';
-
-if (!amount || amount <= 0 || !destinationAddress) {
-alert('Por favor, preencha o montante e a carteira de destino (ex: USDT TRC20).');
-return;
-}
-
-try {
-const response = await fetch(`${BACKEND_URL}/api/withdraw`, {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
-username: typeof currentUser !== 'undefined' ? currentUser : 'Geovane',
-amount: amount,
-destinationAddress: destinationAddress
-})
+  } catch (error) {
+    console.error('Erro no Saque:', error.response?.data || error.message);
+    return res.status(500).json({
+      success: false,
+      error: error.response?.data?.message || 'Erro ao comunicar com a API de Payouts.'
+    });
+  }
 });
 
-const data = await response.json();
-
-if (response.ok && data.success) {
-alert(`Sucesso! Saque de €${amount} enviado para a carteira ${destinationAddress}`);
-try { closeModal('withdrawModal'); } catch(e) {}
-} else {
-alert('Erro no Payout: ' + (data.error || 'Falha ao processar o saque real.'));
-}
-} catch (error) {
-console.error('Erro de ligação:', error);
-alert('Erro ao comunicar com o servidor.');
-}
-}
-
-// Ligar as funções aos botões do portal
-document.addEventListener('DOMContentLoaded', () => {
-const depositForm = document.querySelector('#depositModal form');
-if (depositForm) {
-depositForm.onsubmit = handleDeposit;
-}
-
-const withdrawForm = document.querySelector('#withdrawModal form');
-if (withdrawForm) {
-withdrawForm.onsubmit = handleWithdraw;
-}
+// Inicialização do servidor
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor ChessBet a rodar na porta ${PORT}`);
 });
-// Função chamada quando o utilizador clica em pagar/depositar
-async function iniciarPagamentoCripto(valorAposta) {
-try {
-// Exibir indicador de carregamento (opcional)
-console.log("A criar fatura de pagamento...");
-
-const resposta = await fetch('/api/create-payment', {
-method: 'POST',
-headers: {
-'Content-Type': 'application/json'
-},
-body: JSON.stringify({
-price_amount: valorAposta, // Ex: 10 (USD / Valor da aposta)
-price_currency: 'usd', // Moeda base
-pay_currency: 'usdttrc20', // Moeda escolhida pelo utilizador (ex: USDT na rede TRC20, BTC, etc.)
-order_id: `match_${Date.now()}` // ID único para esta partida/transação
-})
-});
-
-const dados = await resposta.json();
-
-if (!resposta.ok) {
-throw new Error(dados.error || 'Erro ao comunicar com o servidor de pagamentos.');
-}
-
-console.log("Pagamento gerado com sucesso:", dados);
-
-// O NOWPayments devolve um link de pagamento (invoice_url) ou o endereço de wallet
-if (dados.invoice_url) {
-// Redireciona o jogador para a página oficial de pagamento seguro da NOWPayments
-window.location.href = dados.invoice_url;
-} else {
-alert('Endereço de pagamento gerado, mas o link de redirecionamento não foi encontrado.');
-}
-
-} catch (erro) {
-console.error('Erro no processo de pagamento:', erro.message);
-alert('Não foi possível iniciar o pagamento. Tenta novamente.');
-}
-}
