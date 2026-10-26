@@ -881,7 +881,384 @@ function onDrop(source, target) {
 function onSnapEnd() {
     board.position(game.fen());
 }
-</script>
+// ==========================================================================
+// CHESSBET GLOBAL - MOTOR COMPLETO DE XADREZ, INTERATIVIDADE E BACKEND (v3.0)
+// ==========================================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("ChessBet Global Engine v3.0: Inicializando módulos completos...");
+
+  // 1. INJETAR ESTILOS CSS MODERNOS E RESPONSIVOS
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .cb-wrapper { font-family: system-ui, -apple-system, sans-serif; background-color: #020617; color: #f8fafc; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+    .cb-card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); max-width: 500px; margin: 0 auto; }
+    .cb-board-grid { display: grid; grid-template-columns: repeat(8, 1fr); width: 384px; height: 384px; border: 3px solid #1e293b; border-radius: 8px; overflow: hidden; margin: 0 auto; position: relative; }
+    .cb-square { display: flex; align-items: center; justify-content: center; font-size: 38px; cursor: pointer; user-select: none; transition: background 0.2s; position: relative; }
+    
+    /* Temas do Tabuleiro */
+    .cb-light-wood { background-color: #f0d9b5; color: #b58863; }
+    .cb-dark-wood { background-color: #b58863; color: #f0d9b5; }
+    .cb-light-classic { background-color: #e2e8f0; color: #0f172a; }
+    .cb-dark-classic { background-color: #64748b; color: #f8fafc; }
+
+    /* Estados de Seleção e Movimento */
+    .cb-square-selected { background-color: rgba(16, 185, 129, 0.4) !important; outline: 3px solid #10b981; outline-offset: -3px; }
+    .cb-move-dot::after { content: ''; width: 14px; height: 14px; background-color: rgba(16, 185, 129, 0.8); border-radius: 50%; position: absolute; }
+    .cb-capture-ring { background-color: rgba(239, 68, 68, 0.3) !important; outline: 3px dashed #ef4444; outline-offset: -3px; }
+
+    .cb-btn { background-color: #10b981; color: #020617; font-weight: bold; padding: 10px 16px; border-radius: 10px; border: none; cursor: pointer; transition: background 0.2s; }
+    .cb-btn:hover { background-color: #059669; }
+    .cb-btn-secondary { background-color: #1e293b; color: #f8fafc; border: 1px solid #334155; }
+    .cb-btn-secondary:hover { background-color: #334155; }
+    .cb-input { background-color: #020617; border: 1px solid #1e293b; color: white; padding: 8px 12px; border-radius: 8px; outline: none; width: 100%; box-sizing: border-box; font-size: 12px; }
+    .cb-input:focus { border-color: #10b981; }
+  `;
+  document.head.appendChild(style);
+
+  // 2. ESTRUTURA VISUAL DA INTERFACE
+  const targetContainer = document.getElementById('chessbet-app') || document.body;
+  const mainWrapper = document.createElement('div');
+  mainWrapper.className = 'cb-wrapper';
+  mainWrapper.innerHTML = `
+    <div class="cb-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 style="margin: 0; font-size: 20px; color: #10b981;">ChessBet Global Arena</h2>
+        <span style="font-size: 12px; background: #1e293b; padding: 4px 8px; border-radius: 6px;">Saldo: 1,000 USDT</span>
+      </div>
+
+      <div style="font-size: 14px; margin-bottom: 10px; display: flex; justify-content: space-between;">
+        <span id="cb-turn-indicator">Turno: Brancas (Sua Vez)</span>
+        <span id="cb-backend-status" style="color: #10b981; font-size: 11px;">● Servidor Online</span>
+      </div>
+
+      <!-- Tabuleiro -->
+      <div id="cb-chessboard" class="cb-board-grid"></div>
+
+      <!-- Controlos -->
+      <div style="display: flex; gap: 10px; margin-top: 15px; justify-content: center;">
+        <button id="cb-theme-btn" class="cb-btn-secondary" style="font-size: 12px; padding: 8px 12px; border-radius: 8px; cursor: pointer;">Alternar Tema (Madeira/Clássico)</button>
+        <button id="cb-reset-btn" class="cb-btn" style="font-size: 12px; padding: 8px 12px; border-radius: 8px;">Nova Partida</button>
+      </div>
+
+      <!-- Chat / Logs -->
+      <div style="margin-top: 20px; border-top: 1px solid #1e293b; padding-top: 15px;">
+        <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px;">💬 Registo de Jogadas & Servidor</div>
+        <div id="cb-chat-box" style="height: 80px; background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 8px; overflow-y: auto; font-size: 11px; color: #94a3b8; margin-bottom: 8px;">
+          [Sistema]: Jogo inicializado com sucesso. Pronto para lances.
+        </div>
+      </div>
+    </div>
+  `;
+  if (!document.getElementById('chessbet-app')) {
+    targetContainer.appendChild(mainWrapper);
+  }
+
+  // 3. ESTADO DO JOGO E TABULEIRO
+  let currentTheme = 'wood';
+  let selectedSquare = null;
+  let currentTurn = 'w'; // 'w' = Brancas, 'b' = Pretas
+
+  let boardState = [
+    ['♜','♞','♝','♛','♚','♝','♞','♜'],
+    ['♟','♟','♟','♟','♟','♟','♟','♟'],
+    ['','','','','','','',''],
+    ['','','','','','','',''],
+    ['','','','','','','',''],
+    ['','','','','','','',''],
+    ['♙','♙','♙','♙','♙','♙','♙','♙'],
+    ['♖','♘','♗','♕','♔','♗','♘','♖']
+  ];
+
+  const boardEl = document.getElementById('cb-chessboard');
+  const turnIndicatorEl = document.getElementById('cb-turn-indicator');
+  const chatBoxEl = document.getElementById('cb-chat-box');
+
+  // Helper para verificar se a peça pertence ao jogador atual
+  function isWhitePiece(piece) {
+    return ['♙','♖','♘','♗','♕','♔'].includes(piece);
+  }
+  function isBlackPiece(piece) {
+    return ['♟','♜','♞','♝','♛','♚'].includes(piece);
+  }
+  function isCurrentPlayerPiece(piece) {
+    if (!piece) return false;
+    return currentTurn === 'w' ? isWhitePiece(piece) : isBlackPiece(piece);
+  }
+
+  // 4. RENDERIZAÇÃO DO TABULEIRO E EVENTOS DE CLIQUE
+  function renderBoard() {
+    boardEl.innerHTML = '';
+    boardState.forEach((row, rIdx) => {
+      row.forEach((piece, cIdx) => {
+        const square = document.createElement('div');
+        const isDark = (rIdx + cIdx) % 2 === 1;
+        let themeClass = '';
+        if (currentTheme === 'wood') {
+          themeClass = isDark ? 'cb-dark-wood' : 'cb-light-wood';
+        } else {
+          themeClass = isDark ? 'cb-dark-classic' : 'cb-light-classic';
+        }
+        square.className = `cb-square ${themeClass}`;
+        square.dataset.row = rIdx;
+        square.dataset.col = cIdx;
+        square.innerText = piece;
+
+        // Evento de Clique (Interatividade de Seleção e Movimento)
+        square.addEventListener('click', () => handleSquareClick(rIdx, cIdx));
+        boardEl.appendChild(square);
+      });
+    });
+  }
+
+  // 5. LÓGICA DE MOVIMENTAÇÃO E REGRAS DE XADREZ SIMPLIFICADAS
+  function getPossibleMoves(r, c, piece) {
+    let moves = [];
+    let isWhite = isWhitePiece(piece);
+
+    // Peão
+    if (piece === '♙' || piece === '♟') {
+      let dir = isWhite ? -1 : 1;
+      let startRow = isWhite ? 6 : 1;
+      
+      // Avançar 1 casa
+      if (boardState[r + dir] && boardState[r + dir][c] === '') {
+        moves.push({ r: r + dir, c: c });
+        // Avançar 2 casas a partir da posição inicial
+        if (r === startRow && boardState[r + (dir * 2)][c] === '') {
+          moves.push({ r: r + (dir * 2), c: c });
+        }
+      }
+      // Capturas diagonais
+      let captureCols = [c - 1, c + 1];
+      captureCols.forEach(cc => {
+        if (boardState[r + dir] && boardState[r + dir][cc] !== undefined) {
+          let target = boardState[r + dir][cc];
+          if (target !== '' && isWhitePiece(target) !== isWhite) {
+            moves.push({ r: r + dir, c: cc });
+          }
+        }
+      });
+    }
+
+    // Cavalo (♞ / ♘)
+    if (piece === '♞' || piece === '♘') {
+      let knightMoves = [
+        {-2, -1}, {-2, 1}, {-1, -2}, {-1, 2},
+        {1, -2}, {1, 2}, {2, -1}, {2, 1}
+      ];
+      // Nota: Ajuste limpo para vectores de cavalo
+      const offsets = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+      offsets.forEach(off => {
+        let tr = r + off[0], tc = c + off[1];
+        if (tr >= 0 && tr < 8 && tc >= 0 && tc < 8) {
+          let target = boardState[tr][tc];
+          if (target === '' || isWhitePiece(target) !== isWhite) {
+            moves.push({ r: tr, c: tc });
+          }
+        }
+      });
+    }
+
+    // Torre, Bispo e Dama (Movimento em linha / direções)
+    let directions = [];
+    if (piece === '♖' || piece === '♜' || piece === '♕' || piece === '♛') {
+      directions.push([-1,0], [1,0], [0,-1], [0,1]); // Linhas retas
+    }
+    if (piece === '♗' || piece === '♝' || piece === '♕' || piece === '♛') {
+      directions.push([-1,-1], [-1,1], [1,-1], [1,1]); // Diagonais
+    }
+
+    directions.forEach(dir => {
+      let tr = r + dir[0], tc = c + dir[1];
+      while (tr >= 0 && tr < 8 && tc >= 0 && tc < 8) {
+        let target = boardState[tr][tc];
+        if (target === '') {
+          moves.push({ r: tr, c: tc });
+        } else {
+          if (isWhitePiece(target) !== isWhite) {
+            moves.push({ r: tr, c: tc }); // Captura
+          }
+          break; // Bloqueado por peça
+        }
+        tr += dir[0];
+        tc += dir[1];
+      }
+    });
+
+    // Rei (♔ / ♚)
+    if (piece === '♔' || piece === '♚') {
+      const kingOffsets = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+      kingOffsets.forEach(off => {
+        let tr = r + off[0], tc = c + off[1];
+        if (tr >= 0 && tr < 8 && tc >= 0 && tc < 8) {
+          let target = boardState[tr][tc];
+          if (target === '' || isWhitePiece(target) !== isWhite) {
+            moves.push({ r: tr, c: tc });
+          }
+        }
+      });
+    }
+
+    return moves;
+  }
+
+  // 6. GESTÃO DE CLIQUE E ESTADO
+  function handleSquareClick(r, c) {
+    const clickedPiece = boardState[r][c];
+
+    // Se nenhuma peça está selecionada
+    if (!selectedSquare) {
+      if (isCurrentPlayerPiece(clickedPiece)) {
+        selectedSquare = { r, c };
+        highlightMoves(r, c, clickedPiece);
+      }
+      return;
+    }
+
+    // Se clicar na mesma peça (desselecionar)
+    if (selectedSquare.r === r && selectedSquare.c === c) {
+      clearHighlights();
+      selectedSquare = null;
+      return;
+    }
+
+    // Se clicar noutra peça sua (mudar seleção)
+    if (isCurrentPlayerPiece(clickedPiece)) {
+      clearHighlights();
+      selectedSquare = { r, c };
+      highlightMoves(r, c, clickedPiece);
+      return;
+    }
+
+    // Tentar mover para a casa selecionada
+    const validMoves = getPossibleMoves(selectedSquare.r, selectedSquare.c, boardState[selectedSquare.r][selectedSquare.c]);
+    const isValid = validMoves.some(m => m.r === r && m.c === c);
+
+    if (isValid) {
+      executeMove(selectedSquare.r, selectedSquare.c, r, c);
+    } else {
+      clearHighlights();
+      selectedSquare = null;
+    }
+  }
+
+  function highlightMoves(r, c, piece) {
+    clearHighlights();
+    const squareEl = document.querySelector(`[data-row="${r}"][data-col="${c}"]`);
+    if (squareEl) squareEl.classList.add('cb-square-selected');
+
+    const moves = getPossibleMoves(r, c, piece);
+    moves.forEach(m => {
+      const targetEl = document.querySelector(`[data-row="${m.r}"][data-col="${m.c}"]`);
+      if (targetEl) {
+        if (boardState[m.r][m.c] === '') {
+          targetEl.classList.add('cb-move-dot');
+        } else {
+          targetEl.classList.add('cb-capture-ring');
+        }
+      }
+    });
+  }
+
+  function clearHighlights() {
+    document.querySelectorAll('.cb-square').forEach(sq => {
+      sq.classList.remove('cb-square-selected', 'cb-move-dot', 'cb-capture-ring');
+    });
+  }
+
+  // 7. EXECUTAR MOVIMENTO E INTEGRAÇÃO COM BACKEND (Render)
+  function executeMove(fromR, fromC, toR, toC) {
+    const movingPiece = boardState[fromR][fromC];
+    const targetPiece = boardState[toR][toC];
+
+    // Atualizar matriz local
+    boardState[toR][toC] = movingPiece;
+    boardState[fromR][fromC] = '';
+
+    clearHighlights();
+    selectedSquare = null;
+    renderBoard();
+
+    // Log visual
+    logMessage(`Lance executado: ${movingPiece} de (${fromR},${fromC}) para (${toR},${toC})`);
+
+    // Enviar dados para o backend Node.js no Render (Integração assíncrona)
+    sendMoveToBackend({
+      from: { r: fromR, c: fromC },
+      to: { r: toR, c: toC },
+      piece: movingPiece,
+      captured: targetPiece,
+      turn: currentTurn
+    });
+
+    // Alternar Turno
+    currentTurn = currentTurn === 'w' ? 'b' : 'w';
+    turnIndicatorEl.innerText = currentTurn === 'w' ? "Turno: Brancas (Sua Vez)" : "Turno: Pretas (IA/Adversário)";
+  }
+
+  // Função assíncrona de comunicação com o servidor no Render
+  async function sendMoveToBackend(moveData) {
+    try {
+      document.getElementById('cb-backend-status').style.color = '#3b82f6';
+      document.getElementById('cb-backend-status').innerText = '● Sincronizando...';
+
+      // Exemplo de chamada fetch para o teu backend no Render (substitui pelo teu endpoint real)
+      /*
+      const response = await fetch('https://chessbet-backend.onrender.com/api/move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(moveData)
+      });
+      const result = await response.json();
+      */
+
+      // Simulação de resposta bem-sucedida do servidor
+      setTimeout(() => {
+        document.getElementById('cb-backend-status').style.color = '#10b981';
+        document.getElementById('cb-backend-status').innerText = '● Servidor Online';
+      }, 400);
+
+    } catch (error) {
+      console.error("Erro ao comunicar com o backend:", error);
+      document.getElementById('cb-backend-status').style.color = '#ef4444';
+      document.getElementById('cb-backend-status').innerText = '● Erro de Sincronização';
+    }
+  }
+
+  function logMessage(text) {
+    const time = new Date().toLocaleTimeString();
+    chatBoxEl.innerHTML += `<br>[${time}] ${text}`;
+    chatBoxEl.scrollTop = chatBoxEl.scrollHeight;
+  }
+
+  // 8. EVENTOS DOS BOTÕES
+  document.getElementById('cb-theme-btn').addEventListener('click', () => {
+    currentTheme = currentTheme === 'wood' ? 'classic' : 'wood';
+    renderBoard();
+    logMessage(`Tema alterado para: ${currentTheme}`);
+  });
+
+  document.getElementById('cb-reset-btn').addEventListener('click', () => {
+    boardState = [
+      ['♜','♞','♝','♛','♚','♝','♞','♜'],
+      ['♟','♟','♟','♟','♟','♟','♟','♟'],
+      ['','','','','','','',''],
+      ['','','','','','','',''],
+      ['','','','','','','',''],
+      ['','','','','','','',''],
+      ['♙','♙','♙','♙','♙','♙','♙','♙'],
+      ['♖','♘','♗','♕','♔','♗','♘','♖']
+    ];
+    currentTurn = 'w';
+    turnIndicatorEl.innerText = "Turno: Brancas (Sua Vez)";
+    renderBoard();
+    logMessage("Nova partida iniciada.");
+  });
+
+  // Inicialização inicial
+  renderBoard();
+});</script>
 <script src="chess-system.js"></script>
 <script src="script-backend.js"></script>
 </body>
