@@ -90,4 +90,43 @@ if (withdrawForm) {
 withdrawForm.onsubmit = handleWithdraw;
 }
 });
+// Função chamada quando o utilizador clica em pagar/depositar
+async function iniciarPagamentoCripto(valorAposta) {
+try {
+// Exibir indicador de carregamento (opcional)
+console.log("A criar fatura de pagamento...");
 
+const resposta = await fetch('/api/create-payment', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json'
+},
+body: JSON.stringify({
+price_amount: valorAposta, // Ex: 10 (USD / Valor da aposta)
+price_currency: 'usd', // Moeda base
+pay_currency: 'usdttrc20', // Moeda escolhida pelo utilizador (ex: USDT na rede TRC20, BTC, etc.)
+order_id: `match_${Date.now()}` // ID único para esta partida/transação
+})
+});
+
+const dados = await resposta.json();
+
+if (!resposta.ok) {
+throw new Error(dados.error || 'Erro ao comunicar com o servidor de pagamentos.');
+}
+
+console.log("Pagamento gerado com sucesso:", dados);
+
+// O NOWPayments devolve um link de pagamento (invoice_url) ou o endereço de wallet
+if (dados.invoice_url) {
+// Redireciona o jogador para a página oficial de pagamento seguro da NOWPayments
+window.location.href = dados.invoice_url;
+} else {
+alert('Endereço de pagamento gerado, mas o link de redirecionamento não foi encontrado.');
+}
+
+} catch (erro) {
+console.error('Erro no processo de pagamento:', erro.message);
+alert('Não foi possível iniciar o pagamento. Tenta novamente.');
+}
+}
