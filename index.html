@@ -805,13 +805,93 @@ async function handleDeposit(e) {
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerText;
-    submitBtn.innerText = "A gerar fatura NOWPayments...";
+    submitBtn.innerText = "A gerar checkout na NOWPayments...";
     submitBtn.disabled = true;
 
     try {
-        // Substitua pelo URL do seu backend no Render (ex: https://chessbet-api.onrender.com/api/criar-pagamento)
         const response = await fetch('https://SEU-SERVIDOR-NO-RENDER.onrender.com/api/criar-pagamento', {
-            method: 'POST
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: val,
+                userEmail: currentUser || 'Utilizador ChessBet'
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.payment_url) {
+            totalUserMovementsVal += val;
+            userMovementsLog.unshift(`📥 [Fatura Gerada] Utilizador: ${currentUser} pediu depósito de €${val.toFixed(2)}`);
+            atualizarBancoMovimentos();
+
+            window.location.href = data.payment_url;
+        } else {
+            alert('Não foi possível criar a fatura de pagamento. Verifique o backend.');
+        }
+    } catch (error) {
+        console.error('Erro de conexão:', error);
+        alert('Erro ao conectar ao servidor de pagamentos.');
+    } finally {
+        submitBtn.innerText = originalText;
+        submitBtn.disabled = false;
+        closeModal('depositModal');
+    }
+}
+
+// Saque REAL via API de Payouts da NOWPayments
+async function handleWithdraw(e) {
+    e.preventDefault();
+    const val = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+    const address = document.getElementById('withdrawAddress').value.trim();
+
+    if (val <= 0 || val > balance) {
+        alert('Valor inválido ou saldo insuficiente.');
+        return;
+    }
+
+    const withdrawBtn = document.getElementById('withdrawBtn');
+    const originalText = withdrawBtn.innerText;
+    withdrawBtn.innerText = "A processar Payout automático...";
+    withdrawBtn.disabled = true;
+
+    try {
+        const response = await fetch('https://SEU-SERVIDOR-NO-RENDER.onrender.com/api/criar-saque', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: val,
+                address: address,
+                userEmail: currentUser || 'Utilizador ChessBet'
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            balance -= val;
+            document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
+
+            totalUserMovementsVal += val;
+            userMovementsLog.unshift(`📤 [Saque Real Payout] Utilizador: ${currentUser} sacou €${val.toFixed(2)} para ${address}`);
+            atualizarBancoMovimentos();
+
+            historyLog.unshift(`💸 Saque Real Payout (-€${val.toFixed(2)})`);
+            atualizarPainelUtilizador();
+
+            alert(`Saque de €${val.toFixed(2)} enviado com sucesso para a carteira ${address} via NOWPayments!`);
+            closeModal('withdrawModal');
+        } else {
+            alert('Falha ao processar o saque automático. Verifique o saldo de Payouts na sua conta NOWPayments.');
+        }
+    } catch (error) {
+        console.error('Erro de conexão:', error);
+        alert('Erro ao conectar ao servidor para efetuar o saque.');
+    } finally {
+        withdrawBtn.innerText = originalText;
+        withdrawBtn.disabled = false;
+    }
+}
 function onSnapEnd() {
     board.position(game.fen());
 }
