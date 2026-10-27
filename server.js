@@ -39,6 +39,20 @@ app.post('/api/criar-pagamento', async (req, res) => {
         res.status(500).json({ success: false, error: 'Erro ao comunicar com a NOWPayments.' });
     }
 });
+// Depósito Real via NOWPayments API
+async function handleDeposit(e) {
+    e.preventDefault();
+    const val = parseFloat(document.getElementById('depositAmount').value) || 0;
+    if (val <= 0) return;
 
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerText;
+    submitBtn.innerText = "A gerar fatura NOWPayments...";
+    submitBtn.disabled = true;
+
+    try {
+        // Substitua pelo URL do seu backend no Render (ex: https://chessbet-api.onrender.com/api/criar-pagamento)
+        const response = await fetch('https://SEU-SERVIDOR-NO-RENDER.onrender.com/api/criar-pagamento', {
+            method: 'POST
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor ChessBet a correr na porta ${PORT}`));
