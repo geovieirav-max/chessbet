@@ -16,12 +16,12 @@ app.post('/api/criar-pagamento', async (req, res) => {
         
         const response = await axios.post('https://api.nowpayments.io/v1/payment', {
             price_amount: amount,
-            price_currency: 'eur', // Moeda base da sua plataforma (€)
+            price_currency: 'eur', // Moeda base da plataforma (€)
             pay_currency: 'usdttrc20', // Criptomoeda padrão para pagamento (USDT na rede TRC20)
             order_id: `chessbet_${Date.now()}`,
             order_description: `Depósito na conta ChessBet Global de ${userEmail || 'Utilizador'}`,
-            success_url: 'https://seu-dominio-na-vercel.app/sucesso.html',
-            cancel_url: 'https://seu-dominio-na-vercel.app/cancelado.html'
+            success_url: 'https://chessbet-ten.vercel.app/',
+            cancel_url: 'https://chessbet-ten.vercel.app/'
         }, {
             headers: {
                 'x-api-key': NOWPAYMENTS_API_KEY,
@@ -31,7 +31,7 @@ app.post('/api/criar-pagamento', async (req, res) => {
 
         res.json({ 
             success: true, 
-            payment_url: response.data.invoice_url,
+            payment_url: response.data.invoice_url || response.data.payment_url,
             payment_id: response.data.payment_id 
         });
     } catch (error) {
@@ -39,20 +39,6 @@ app.post('/api/criar-pagamento', async (req, res) => {
         res.status(500).json({ success: false, error: 'Erro ao comunicar com a NOWPayments.' });
     }
 });
-// Depósito Real via NOWPayments API
-async function handleDeposit(e) {
-    e.preventDefault();
-    const val = parseFloat(document.getElementById('depositAmount').value) || 0;
-    if (val <= 0) return;
 
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerText;
-    submitBtn.innerText = "A gerar fatura NOWPayments...";
-    submitBtn.disabled = true;
-
-    try {
-        // Substitua pelo URL do seu backend no Render (ex: https://chessbet-api.onrender.com/api/criar-pagamento)
-        const response = await fetch('https://SEU-SERVIDOR-NO-RENDER.onrender.com/api/criar-pagamento', {
-            method: 'POST
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Servidor ChessBet a correr na porta ${PORT}`));
