@@ -1,4 +1,4 @@
-const express = require('express');
+Const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 
@@ -14,14 +14,23 @@ app.post('/api/criar-pagamento', async (req, res) => {
     try {
         const { amount, userEmail } = req.body;
         
-        const response = await axios.post('https://api.nowpayments.io/v1/payment', {
-            price_amount: amount,
+        // 1. VALIDAÇÃO LOCAL: Verifica se o valor é válido e maior que zero
+        const parsedAmount = parseFloat(amount);
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Saldo insuficiente ou valor inválido' 
+            });
+        }
+        
+        const response = await axios.post('https://nowpayments.io', {
+            price_amount: parsedAmount,
             price_currency: 'eur', // Moeda base da plataforma (€)
             pay_currency: 'usdttrc20', // Criptomoeda padrão para pagamento (USDT na rede TRC20)
             order_id: `chessbet_${Date.now()}`,
             order_description: `Depósito na conta ChessBet Global de ${userEmail || 'Utilizador'}`,
-            success_url: 'https://chessbet-ten.vercel.app/',
-            cancel_url: 'https://chessbet-ten.vercel.app/'
+            success_url: 'https://vercel.app',
+            cancel_url: 'https://vercel.app'
         }, {
             headers: {
                 'x-api-key': NOWPAYMENTS_API_KEY,
@@ -36,7 +45,21 @@ app.post('/api/criar-pagamento', async (req, res) => {
         });
     } catch (error) {
         console.error('Erro NOWPayments:', error.response?.data || error.message);
-        res.status(500).json({ success: false, error: 'Erro ao comunicar com a NOWPayments.' });
+        
+        // 2. CAPTURA INTELIGENTE: Se a NOWPayments rejeitar o valor por regras deles (ex: abaixo do mínimo da cripto)
+        const apiErrorMessage = error.response?.data?.message || '';
+        if (apiErrorMessage.includes('amount') || error.response?.status === 400) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Saldo insuficiente ou valor inválido' 
+            });
+        }
+
+        // Erros reais de conexão ou queda do servidor externo
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao conectar ao servidor de pagamento.' 
+        });
     }
 });
 
