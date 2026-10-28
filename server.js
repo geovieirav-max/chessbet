@@ -1,4 +1,4 @@
-Const express = require('express');
+const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 
@@ -23,14 +23,15 @@ app.post('/api/criar-pagamento', async (req, res) => {
             });
         }
         
-        const response = await axios.post('https://nowpayments.io', {
+        // CORRIGIDO: Endpoint oficial correto da API da NOWPayments
+        const response = await axios.post('https://api.nowpayments.io/v1/payment', {
             price_amount: parsedAmount,
             price_currency: 'eur', // Moeda base da plataforma (€)
             pay_currency: 'usdttrc20', // Criptomoeda padrão para pagamento (USDT na rede TRC20)
             order_id: `chessbet_${Date.now()}`,
             order_description: `Depósito na conta ChessBet Global de ${userEmail || 'Utilizador'}`,
-            success_url: 'https://vercel.app',
-            cancel_url: 'https://vercel.app'
+            success_url: 'https://chessbet-ten.vercel.app/', // Atualizado para o teu link real da Vercel
+            cancel_url: 'https://chessbet-ten.vercel.app/'  // Atualizado para o teu link real da Vercel
         }, {
             headers: {
                 'x-api-key': NOWPAYMENTS_API_KEY,
