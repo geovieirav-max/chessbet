@@ -477,59 +477,153 @@ let amigosList = [];
 let campeonatos = {
 mundial: { nome: "Mundial Chess Arena", inscritos: 79, max: 100, minInicio: 80, inscritoUser: false, fase: 1, ativo: false }
 };
-// --- INICIALIZAÇÃO DO TABULEIRO DE XADREZ ---
+// --- ESTADO DO XADREZ & HIGHLIGHTS ---
+let board = null;
+let game = new Chess();
+let pendingPromotion = null;
+let selectedSquare = null; // Guarda a casa selecionada para o movimento
+
 $(document).ready(function() {
   board = Chessboard('board', {
     position: 'start',
     draggable: true,
-    // Adiciona o tema das peças puxando do CDN oficial da Wikipedia em alta definição
     pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
     onDragStart: onDragStart,
     onDrop: onDrop,
     onSnapEnd: onSnapEnd
   });
+
+  // Adiciona o evento de clique nas casas do tabuleiro para mostrar os pontinhos
+  $('#board').on('click', '.square-55d63', function() {
+    const square = $(this).attr('data-square');
+    onSquareClick(square);
+  });
+
   atualizarListaCampeonatos();
 });
+
+// Função chamada ao clicar numa casa do tabuleiro
+function onSquareClick(square) {
+  // 1. Se já havia uma peça selecionada e o utilizador clicou num pontinho válido, faz o movimento
+  if (selectedSquare) {
+    const legalMoves = game.moves({ square: selectedSquare, verbose: true });
+    const targetMove = legalMoves.find(m => m.to === square);
+
+    if (targetMove) {
+      // Verifica se é promoção
+      if (targetMove.promotion) {
+        pendingPromotion = { source: selectedSquare, target: square };
+        openModal('promotionModal');
+        removeHighlights();
+        selectedSquare = null;
+        return;
+      }
+
+      // Executa o movimento normal
+      const move = game.move({
+        from: selectedSquare,
+        to: square,
+        promotion: 'q'
+      });
+
+      if (move) {
+        board.position(game.fen());
+        atualizarEstadoJogoUI();
+      }
+      removeHighlights();
+      selectedSquare = null;
+      return;
+    }
+  }
+
+  // 2. Seleciona a peça e mostra os pontinhos de movimentos válidos
+  const piece = game.get(square);
+  if (piece && piece.color === game.turn()) {
+    removeHighlights();
+    selectedSquare = square;
+    
+    // Destaca a casa selecionada
+    highlightSquare(square, 'rgba(234, 179, 8, 0.4)');
+
+    // Obtém os movimentos legais para esta peça
+    const moves = game.moves({ square: square, verbose: true });
+    if (moves.length === 0) return;
+
+    // Desenha os pontinhos nas casas de destino
+    moves.forEach(m => {
+      highlightValidTarget(m.to);
+    });
+  } else {
+    removeHighlights();
+    selectedSquare = null;
+  }
+}
+
+// Funções visuais para os pontinhos e destaques
+function highlightSquare(square, color) {
+  const $square = $('#board .square-' + square);
+  $square.css('background', color);
+}
+
+function highlightValidTarget(square) {
+  const $square = $('#board .square-' + square);
+  // Adiciona um ponto indicador no centro da casa
+  if ($square.find('.move-dot').length === 0) {
+    $square.append('<div class="move-dot" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%; width: 16px; height: 16px; background-color: rgba(0, 0, 0, 0.35); border-radius: 50%; pointer-events: none; z-index: 10;"></div>');
+  }
+}
+
+function removeHighlights() {
+  $('#board .square-55d63').css('background', '');
+  $('#board .move-dot').remove();
+}
+
 function onDragStart(source, piece, position, orientation) {
-if (game.game_over()) return false;
-if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-(game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-return false;
+  if (game.game_over()) return false;
+  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+      (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+    return false;
+  }
 }
-}
+
 function onDrop(source, target) {
-const piece = game.get(source);
-const isPromotion = piece && piece.type === 'p' &&
-((piece.color === 'w' && target[1] === '8') || (piece.color === 'b' && target[1] === '1'));
-if (isPromotion) {
-pendingPromotion = { source, target };
-openModal('promotionModal');
-return 'snapback';
+  removeHighlights();
+  const piece = game.get(source);
+  const isPromotion = piece && piece.type === 'p' &&
+    ((piece.color === 'w' && target[1] === '8') || (piece.color === 'b' && target[1] === '1'));
+  
+  if (isPromotion) {
+    pendingPromotion = { source, target };
+    openModal('promotionModal');
+    return 'snapback';
+  }
+
+  const move = game.move({
+    from: source,
+    to: target,
+    promotion: 'q'
+  });
+  if (move === null) return 'snapback';
+  atualizarEstadoJogoUI();
 }
-const move = game.move({
-from: source,
-to: target,
-promotion: 'q'
-});
-if (move === null) return 'snapback';
-atualizarEstadoJogoUI();
-}
+
 function selectPromotion(pieceChoice) {
-closeModal('promotionModal');
-if (!pendingPromotion) return;
-const move = game.move({
-from: pendingPromotion.source,
-to: pendingPromotion.target,
-promotion: pieceChoice
-});
-pendingPromotion = null;
-if (move) {
-board.position(game.fen());
-atualizarEstadoJogoUI();
+  closeModal('promotionModal');
+  if (!pendingPromotion) return;
+  const move = game.move({
+    from: pendingPromotion.source,
+    to: pendingPromotion.target,
+    promotion: pieceChoice
+  });
+  pendingPromotion = null;
+  if (move) {
+    board.position(game.fen());
+    atualizarEstadoJogoUI();
+  }
 }
-}
+
 function onSnapEnd() {
-board.position(game.fen());
+  board.position(game.fen());
 }
 function atualizarEstadoJogoUI() {
 if (game.in_checkmate()) {
