@@ -479,14 +479,16 @@ mundial: { nome: "Mundial Chess Arena", inscritos: 79, max: 100, minInicio: 80, 
 };
 // --- INICIALIZAÇÃO DO TABULEIRO DE XADREZ ---
 $(document).ready(function() {
-board = Chessboard('board', {
-position: 'start',
-draggable: true,
-onDragStart: onDragStart,
-onDrop: onDrop,
-onSnapEnd: onSnapEnd
-});
-atualizarListaCampeonatos();
+  board = Chessboard('board', {
+    position: 'start',
+    draggable: true,
+    // Adiciona o tema das peças puxando do CDN oficial da Wikipedia em alta definição
+    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+    onDragStart: onDragStart,
+    onDrop: onDrop,
+    onSnapEnd: onSnapEnd
+  });
+  atualizarListaCampeonatos();
 });
 function onDragStart(source, piece, position, orientation) {
 if (game.game_over()) return false;
