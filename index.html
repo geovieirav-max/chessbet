@@ -300,14 +300,14 @@ Autenticar como Criador
 <span class="text-sm font-mono font-bold text-red-400 bg-dark-900 px-3 py-1 rounded border border-slate-800" id="timerOpponent">10:00</span>
 </div>
 <!-- Tabuleiro de Xadrez -->
-<div id="board" class="w-full max-w-[480px] aspect-square rounded-lg shadow-2xl"></div>
+<div id="board" class="w-full max-w-[480px] aspect-square rounded-lg shadow-2xl relative"></div>
 <!-- Relógio do Jogador -->
 <div class="w-full max-w-[480px] flex justify-between items-center bg-dark-950 p-3 rounded-b-xl border border-slate-800 mt-2">
 <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-emerald-500"></div><span class="text-sm font-semibold text-slate-200" id="currentUserNameLabel">Convidado</span></div>
 <span class="text-sm font-mono font-bold text-emerald-400 bg-dark-900 px-3 py-1 rounded border border-slate-800" id="timerPlayer">10:00</span>
 </div>
 <div id="gameStatus" class="mt-4 text-xs font-medium text-slate-400 bg-dark-950 px-4 py-2 rounded-full border border-slate-800">
-Selecione a modalidade, a aposta e clique em "Procurar 1v1" ou crie um link de duelo.
+Clique numa peça para ver os pontinhos de movimento ou arraste para jogar.
 </div>
 </div>
 <!-- CHAT AO VIVO DA PARTIDA (JOGADORES E ESPECTADORES) -->
@@ -468,163 +468,152 @@ let opponentTime = 600;
 let activeMatchStake = 0;
 let activeMatchMode = "";
 let isMatchActive = false;
-// Estado do Xadrez & Promoção
+
+// Estado do Xadrez & Pontinhos & Promoção
 let board = null;
 let game = new Chess();
 let pendingPromotion = null;
+let selectedSquare = null;
+
 // Campeonatos e Amizades
 let amigosList = [];
 let campeonatos = {
 mundial: { nome: "Mundial Chess Arena", inscritos: 79, max: 100, minInicio: 80, inscritoUser: false, fase: 1, ativo: false }
 };
-// --- ESTADO DO XADREZ & HIGHLIGHTS ---
-let board = null;
-let game = new Chess();
-let pendingPromotion = null;
-let selectedSquare = null; // Guarda a casa selecionada para o movimento
 
+// --- INICIALIZAÇÃO DO TABULEIRO DE XADREZ & CLIQUE COM PONTINHOS ---
 $(document).ready(function() {
-  board = Chessboard('board', {
-    position: 'start',
-    draggable: true,
-    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-    onDragStart: onDragStart,
-    onDrop: onDrop,
-    onSnapEnd: onSnapEnd
-  });
-
-  // Adiciona o evento de clique nas casas do tabuleiro para mostrar os pontinhos
-  $('#board').on('click', '.square-55d63', function() {
-    const square = $(this).attr('data-square');
-    onSquareClick(square);
-  });
-
-  atualizarListaCampeonatos();
+board = Chessboard('board', {
+position: 'start',
+draggable: true,
+pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+onDragStart: onDragStart,
+onDrop: onDrop,
+onSnapEnd: onSnapEnd
 });
 
-// Função chamada ao clicar numa casa do tabuleiro
+// Evento de clique nas casas do tabuleiro para mostrar os pontinhos
+$('#board').on('click', '.square-55d63', function() {
+const square = $(this).attr('data-square');
+onSquareClick(square);
+});
+
+atualizarListaCampeonatos();
+});
+
 function onSquareClick(square) {
-  // 1. Se já havia uma peça selecionada e o utilizador clicou num pontinho válido, faz o movimento
-  if (selectedSquare) {
-    const legalMoves = game.moves({ square: selectedSquare, verbose: true });
-    const targetMove = legalMoves.find(m => m.to === square);
+if (selectedSquare) {
+const legalMoves = game.moves({ square: selectedSquare, verbose: true });
+const targetMove = legalMoves.find(m => m.to === square);
 
-    if (targetMove) {
-      // Verifica se é promoção
-      if (targetMove.promotion) {
-        pendingPromotion = { source: selectedSquare, target: square };
-        openModal('promotionModal');
-        removeHighlights();
-        selectedSquare = null;
-        return;
-      }
-
-      // Executa o movimento normal
-      const move = game.move({
-        from: selectedSquare,
-        to: square,
-        promotion: 'q'
-      });
-
-      if (move) {
-        board.position(game.fen());
-        atualizarEstadoJogoUI();
-      }
-      removeHighlights();
-      selectedSquare = null;
-      return;
-    }
-  }
-
-  // 2. Seleciona a peça e mostra os pontinhos de movimentos válidos
-  const piece = game.get(square);
-  if (piece && piece.color === game.turn()) {
-    removeHighlights();
-    selectedSquare = square;
-    
-    // Destaca a casa selecionada
-    highlightSquare(square, 'rgba(234, 179, 8, 0.4)');
-
-    // Obtém os movimentos legais para esta peça
-    const moves = game.moves({ square: square, verbose: true });
-    if (moves.length === 0) return;
-
-    // Desenha os pontinhos nas casas de destino
-    moves.forEach(m => {
-      highlightValidTarget(m.to);
-    });
-  } else {
-    removeHighlights();
-    selectedSquare = null;
-  }
+if (targetMove) {
+if (targetMove.promotion) {
+pendingPromotion = { source: selectedSquare, target: square };
+openModal('promotionModal');
+removeHighlights();
+selectedSquare = null;
+return;
 }
 
-// Funções visuais para os pontinhos e destaques
+const move = game.move({
+from: selectedSquare,
+to: square,
+promotion: 'q'
+});
+
+if (move) {
+board.position(game.fen());
+atualizarEstadoJogoUI();
+}
+removeHighlights();
+selectedSquare = null;
+return;
+}
+}
+
+const piece = game.get(square);
+if (piece && piece.color === game.turn()) {
+removeHighlights();
+selectedSquare = square;
+highlightSquare(square, 'rgba(234, 179, 8, 0.4)');
+
+const moves = game.moves({ square: square, verbose: true });
+if (moves.length === 0) return;
+
+moves.forEach(m => {
+highlightValidTarget(m.to);
+});
+} else {
+removeHighlights();
+selectedSquare = null;
+}
+}
+
 function highlightSquare(square, color) {
-  const $square = $('#board .square-' + square);
-  $square.css('background', color);
+const $square = $('#board .square-' + square);
+$square.css('background', color);
 }
 
 function highlightValidTarget(square) {
-  const $square = $('#board .square-' + square);
-  // Adiciona um ponto indicador no centro da casa
-  if ($square.find('.move-dot').length === 0) {
-    $square.append('<div class="move-dot" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%; width: 16px; height: 16px; background-color: rgba(0, 0, 0, 0.35); border-radius: 50%; pointer-events: none; z-index: 10;"></div>');
-  }
+const $square = $('#board .square-' + square);
+if ($square.find('.move-dot').length === 0) {
+$square.append('<div class="move-dot" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 16px; height: 16px; background-color: rgba(234, 179, 8, 0.8); border-radius: 50%; pointer-events: none; z-index: 10;"></div>');
+}
 }
 
 function removeHighlights() {
-  $('#board .square-55d63').css('background', '');
-  $('#board .move-dot').remove();
+$('#board .square-55d63').css('background', '');
+$('#board .move-dot').remove();
 }
 
 function onDragStart(source, piece, position, orientation) {
-  if (game.game_over()) return false;
-  if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
-      (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
-    return false;
-  }
+if (game.game_over()) return false;
+if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+(game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+return false;
+}
 }
 
 function onDrop(source, target) {
-  removeHighlights();
-  const piece = game.get(source);
-  const isPromotion = piece && piece.type === 'p' &&
-    ((piece.color === 'w' && target[1] === '8') || (piece.color === 'b' && target[1] === '1'));
-  
-  if (isPromotion) {
-    pendingPromotion = { source, target };
-    openModal('promotionModal');
-    return 'snapback';
-  }
+removeHighlights();
+const piece = game.get(source);
+const isPromotion = piece && piece.type === 'p' &&
+((piece.color === 'w' && target[1] === '8') || (piece.color === 'b' && target[1] === '1'));
 
-  const move = game.move({
-    from: source,
-    to: target,
-    promotion: 'q'
-  });
-  if (move === null) return 'snapback';
-  atualizarEstadoJogoUI();
+if (isPromotion) {
+pendingPromotion = { source, target };
+openModal('promotionModal');
+return 'snapback';
+}
+
+const move = game.move({
+from: source,
+to: target,
+promotion: 'q'
+});
+if (move === null) return 'snapback';
+atualizarEstadoJogoUI();
 }
 
 function selectPromotion(pieceChoice) {
-  closeModal('promotionModal');
-  if (!pendingPromotion) return;
-  const move = game.move({
-    from: pendingPromotion.source,
-    to: pendingPromotion.target,
-    promotion: pieceChoice
-  });
-  pendingPromotion = null;
-  if (move) {
-    board.position(game.fen());
-    atualizarEstadoJogoUI();
-  }
+closeModal('promotionModal');
+if (!pendingPromotion) return;
+const move = game.move({
+from: pendingPromotion.source,
+to: pendingPromotion.target,
+promotion: pieceChoice
+});
+pendingPromotion = null;
+if (move) {
+board.position(game.fen());
+atualizarEstadoJogoUI();
+}
 }
 
 function onSnapEnd() {
-  board.position(game.fen());
+board.position(game.fen());
 }
+
 function atualizarEstadoJogoUI() {
 if (game.in_checkmate()) {
 document.getElementById('gameStatus').innerText = "Xeque-Mate! Partida terminada.";
@@ -634,6 +623,7 @@ document.getElementById('gameStatus').innerText = "Empate!";
 document.getElementById('gameStatus').innerText = `Turno: ${game.turn() === 'w' ? 'Brancas' : 'Pretas'}`;
 }
 }
+
 // --- AUTENTICAÇÃO E ABAS ---
 function switchAuthTab(tab) {
 const loginForm = document.getElementById('loginForm');
@@ -652,12 +642,12 @@ tabRegisterBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-brand-50
 tabLoginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition";
 }
 }
+
 function handleLogin(e) {
 e.preventDefault();
 const user = document.getElementById('loginEmail').value.trim();
 const pass = document.getElementById('loginPass').value.trim();
 
-// Se introduzir os dados do criador direto no login normal, autentica automaticamente
 if (user === "andradegeovane4@gmail.com" && pass === "Fogo@2026") {
 isCreatorAuthenticated = true;
 currentUser = "Criador (Admin)";
@@ -677,18 +667,21 @@ balance = 0.00;
 }
 finalizeAuth();
 }
+
 function handleRegister(e) {
 e.preventDefault();
 currentUser = document.getElementById('regUser').value;
 balance = 0.00;
 finalizeAuth();
 }
+
 function finalizeAuth() {
 document.getElementById('authModal').classList.add('hidden');
 document.getElementById('userNameDisplay').innerText = currentUser;
 document.getElementById('currentUserNameLabel').innerText = currentUser;
 document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 }
+
 function verificarAcessoCriador() {
 if (isCreatorAuthenticated) {
 openModal('adminModal');
@@ -696,6 +689,7 @@ openModal('adminModal');
 openModal('creatorAuthModal');
 }
 }
+
 function handleCreatorLogin(e) {
 e.preventDefault();
 const user = document.getElementById('creatorUser').value.trim();
@@ -715,6 +709,7 @@ openModal('adminModal');
 alert('Credenciais incorretas!');
 }
 }
+
 function logout() {
 currentUser = null;
 isCreatorAuthenticated = false;
@@ -725,6 +720,7 @@ document.getElementById('currentUserNameLabel').innerText = "Convidado";
 document.getElementById('creatorBtnText').innerText = "Área do Criador";
 document.getElementById('authModal').classList.remove('hidden');
 }
+
 // --- GESTÃO DO CO-ADMINISTRADOR E APROVAÇÃO DE FUNDOS ---
 function criarContaCoAdmin() {
 const email = document.getElementById('newCoAdminEmail').value.trim();
@@ -739,6 +735,7 @@ document.getElementById('coAdminStatusBadge').innerText = "Ativo (" + email + ")
 document.getElementById('coAdminStatusBadge').className = "text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded";
 alert('Conta do Segundo Administrador criada com sucesso!');
 }
+
 function removerContaCoAdmin() {
 isCoAdminActive = false;
 coAdminCredentials = { email: "", pass: "" };
@@ -746,6 +743,7 @@ document.getElementById('coAdminStatusBadge').innerText = "Inativo";
 document.getElementById('coAdminStatusBadge').className = "text-xs bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded";
 alert('Conta do Segundo Administrador removida e acesso revogado.');
 }
+
 function solicitarMovimentoCoAdmin(montante, motivo) {
 if (!isCreatorAuthenticated) {
 document.getElementById('approvalDetailsText').innerText = `Motivo: ${motivo} | Montante: €${montante.toFixed(2)}`;
@@ -754,6 +752,7 @@ return false;
 }
 return true;
 }
+
 function responderSolicitacaoAdmin(aprovado) {
 closeModal('adminApprovalModal');
 if (aprovado) {
@@ -762,6 +761,7 @@ alert('Movimentação de fundos aprovada pelo Criador com sucesso!');
 alert('Solicitação de movimentação recusada pelo Criador.');
 }
 }
+
 // --- CÁLCULOS E PAGAMENTOS (ORIGINAIS PRESERVADOS) ---
 const matchStakeInput = document.getElementById('matchStake');
 matchStakeInput.addEventListener('input', updatePotCalculations);
@@ -775,6 +775,7 @@ document.getElementById('calcPlatformFee').innerText = `€${platformFee.toFixed
 document.getElementById('calcWinnerPayout').innerText = `€${winnerPayout.toFixed(2)}`;
 }
 updatePotCalculations();
+
 function openModal(id) {
 document.getElementById(id).classList.remove('hidden');
 document.getElementById(id).classList.add('flex');
@@ -783,6 +784,7 @@ function closeModal(id) {
 document.getElementById(id).classList.add('hidden');
 document.getElementById(id).classList.remove('flex');
 }
+
 function handleDeposit(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('depositAmount').value) || 0;
@@ -795,6 +797,7 @@ atualizarBancoMovimentos();
 alert(`Depósito de €${val.toFixed(2)} gerado via NOWPayments e creditado com sucesso!`);
 closeModal('depositModal');
 }
+
 function handleWithdraw(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('withdrawAmount').value) || 0;
@@ -816,6 +819,7 @@ atualizarBancoMovimentos();
 alert(`Saque de €${val.toFixed(2)} processado via NOWPayments para a carteira ${address}!`);
 closeModal('withdrawModal');
 }
+
 function sacarLucrosCriador() {
 if (creatorProfitVal <= 0) {
 alert('Não tem lucros disponíveis para saque no Banco 1 neste momento.');
@@ -826,9 +830,11 @@ creatorProfitVal = 0;
 atualizarBancoLucros();
 alert(`Sucesso! Saque de €${valorSaque.toFixed(2)} enviado para a sua conta da Caixa Económica de Cabo Verde (Conta: 37558582).`);
 }
+
 function atualizarBancoLucros() {
 document.getElementById('creatorProfitBalance').innerText = `€${creatorProfitVal.toFixed(2)}`;
 }
+
 function atualizarBancoMovimentos() {
 document.getElementById('adminTotalVolumeMov').innerText = `€${totalUserMovementsVal.toFixed(2)}`;
 const listContainer = document.getElementById('userMovementsList');
@@ -836,6 +842,7 @@ if (userMovementsLog.length > 0) {
 listContainer.innerHTML = userMovementsLog.map(log => `<div class="text-slate-300 border-b border-slate-800 pb-1">${log}</div>`).join('');
 }
 }
+
 // --- MATCHMAKING & DUELOS POR LINK ---
 function iniciarBuscaOponente() {
 const stake = parseFloat(matchStakeInput.value) || 0;
@@ -870,10 +877,12 @@ alert('Oponente encontrado! Partida iniciada.');
 }
 }, 1000);
 }
+
 function cancelMatchmaking() {
 clearInterval(matchmakingInterval);
 closeModal('matchmakingModal');
 }
+
 function gerarLinkDueloAmigo() {
 if (!currentUser) {
 alert('Faça login primeiro para criar um link de duelo.');
@@ -882,6 +891,7 @@ return;
 const linkUnico = `https://chessbet.global/duelo?host=${currentUser}&stake=${matchStakeInput.value}`;
 prompt("Copie e envie este link para o seu amigo disputar o duelo:", linkUnico);
 }
+
 // --- CAMPEONATOS E SALA ESPECIAL ---
 function inscreverCampeonato(id) {
 if (!currentUser) {
@@ -905,6 +915,7 @@ document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 atualizarListaCampeonatos();
 alert('Inscrição efetuada com sucesso! Assim que atingir o mínimo de inscritos, a sala especial e a primeira fase iniciarão automaticamente.');
 }
+
 function atualizarListaCampeonatos() {
 let camp = campeonatos['mundial'];
 let container = document.getElementById('campeonatosListContainer');
@@ -920,12 +931,14 @@ if (camp.inscritoUser) {
 document.getElementById('playerTournamentsList').innerHTML = `<div class="bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center"> <span>${camp.nome} (Fase 1 - Ativo)</span> <button onclick="openModal('tournamentRoomModal')" class="text-brand-500 font-bold hover:underline">Abrir Sala Especial</button> </div>`;
 }
 }
+
 function entrarPartidaTorneio() {
 closeModal('tournamentRoomModal');
 document.getElementById('opponentNameLabel').innerText = "Mata-Mata Rival (Torneio)";
 iniciarRelogioPartida();
 alert('Conectado à partida do torneio! Boa sorte.');
 }
+
 // --- SISTEMA DE AMIZADES ---
 function enviarPedidoAmizade() {
 const amigo = document.getElementById('addFriendInput').value.trim();
@@ -935,11 +948,63 @@ document.getElementById('addFriendInput').value = '';
 atualizarListaAmigos();
 alert(`Pedido de amizade enviado para ${amigo} com sucesso!`);
 }
+
 function atualizarListaAmigos() {
 let box = document.getElementById('friendListContainer');
 if (amigosList.length === 0) {
 box.innerHTML = `<div class="text-slate-500 text-xs">Nenhum amigo adicionado ainda.</div>`;
 return;
+}
+box.innerHTML = amigosList.map(f => `<div class="bg-dark-900 p-2 rounded-lg border border-slate-800 flex justify-between items-center text-xs"> <span class="text-white font-medium">${f.nome}</span> <span class="text-brand-500">${f.status}</span> </div>`).join('');
+}
+
+// --- CHAT AO VIVO ---
+function enviarMensagemChat(e) {
+e.preventDefault();
+const input = document.getElementById('chatInputMsg');
+const msg = input.value.trim();
+if (!msg) return;
+const box = document.getElementById('chatMessagesBox');
+const author = currentUser || 'Espectador';
+box.innerHTML += `<div class="text-slate-300"><strong class="text-brand-500">${author}:</strong> ${msg}</div>`;
+box.scrollTop = box.scrollHeight;
+input.value = '';
+}
+
+// --- RELÓGIO E FIM DE PARTIDA ---
+function iniciarRelogioPartida() {
+playerTime = 600;
+opponentTime = 600;
+clearInterval(gameTimerInterval);
+gameTimerInterval = setInterval(() => {
+playerTime--;
+let m = String(Math.floor(playerTime / 60)).padStart(2, '0');
+let s = String(playerTime % 60).padStart(2, '0');
+document.getElementById('timerPlayer').innerText = `${m}:${s}`;
+if (playerTime <= 0) {
+clearInterval(gameTimerInterval);
+alert('Tempo esgotado! Derrota por tempo.');
+}
+}, 1000);
+}
+
+function fimDePartida(tipo) {
+clearInterval(gameTimerInterval);
+if (tipo === 'checkmate_win' || tipo === 'resignation') {
+const winnings = (activeMatchStake * 2) * 0.90;
+balance += winnings;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
+let comissao = (activeMatchStake * 2) * 0.10;
+creatorProfitVal += comissao;
+atualizarBancoLucros();
+alert(`Partida encerrada! Venceu o prémio de €${winnings.toFixed(2)}. Comissão da casa de €${comissao.toFixed(2)} adicionada ao Banco 1.`);
+} else {
+alert('Partida encerrada em empate ou abortada.');
+}
+}
+</script>
+</body>
+</html>
 }
 box.innerHTML = amigosList.map(f => `<div class="bg-dark-900 p-2 rounded-lg border border-slate-800 flex justify-between items-center text-xs"> <span class="text-white font-medium">${f.nome}</span> <span class="text-brand-500">${f.status}</span> </div>`).join('');
 }
