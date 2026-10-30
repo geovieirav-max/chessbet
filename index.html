@@ -161,7 +161,7 @@ Entrar no Jogo do Torneio
 <form onsubmit="handleCreatorLogin(event)" class="space-y-4">
 <div>
 <label class="text-xs text-slate-300 font-medium">Email do Criador</label>
-<input type="email" id="creatorUser" required placeholder="andradegeovane4@gmail.com" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500">
+<input type="email" id="creatorUser" required value="andradegeovane4@gmail.com" class="w-full mt-1 bg-dark-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500">
 </div>
 <div>
 <label class="text-xs text-slate-300 font-medium">Palavra-passe do Criador</label>
@@ -282,7 +282,7 @@ Autenticar como Criador
 <div class="bg-dark-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
 <div>
 <span class="text-xs font-bold text-white block">Mundial Chess Arena</span>
-<span class="text-[10px] text-slate-400" id="tourneyStatusText-mundial">82/100 inscritos (Mín: 80)</span>
+<span class="text-[10px] text-slate-400" id="tourneyStatusText-mundial">79/100 inscritos (Mín: 80)</span>
 </div>
 <div id="tourneyActionBtn-mundial">
 <button onclick="inscreverCampeonato('mundial')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg transition font-bold shadow">Inscrever (€50)</button>
@@ -449,7 +449,7 @@ Ainda não está inscrito em nenhum campeonato oficial.
 </div>
 <!-- Footer -->
 <footer class="border-t border-slate-800 bg-dark-900 py-4 text-center text-xs text-slate-500">
-ChessBet Global © 2026 - Plataforma de Apostas e Xadrez Online. Todos os direitos reservados.
+ChessBet Global &copy; 2026 - Plataforma de Apostas e Xadrez Online. Todos os direitos reservados.
 </footer>
 <script>
 lucide.createIcons();
@@ -490,14 +490,12 @@ atualizarListaCampeonatos();
 });
 function onDragStart(source, piece, position, orientation) {
 if (game.game_over()) return false;
-// Apenas peças brancas ou pretas conforme turno
 if ((game.turn() === 'w' && piece.search(/^b/) !== -1) ||
 (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
 return false;
 }
 }
 function onDrop(source, target) {
-// Verifica se é promoção de peão
 const piece = game.get(source);
 const isPromotion = piece && piece.type === 'p' &&
 ((piece.color === 'w' && target[1] === '8') || (piece.color === 'b' && target[1] === '1'));
@@ -506,11 +504,10 @@ pendingPromotion = { source, target };
 openModal('promotionModal');
 return 'snapback';
 }
-// Movimento normal
 const move = game.move({
 from: source,
 to: target,
-promotion: 'q' // padrão se não abrir modal
+promotion: 'q'
 });
 if (move === null) return 'snapback';
 atualizarEstadoJogoUI();
@@ -538,10 +535,10 @@ document.getElementById('gameStatus').innerText = "Xeque-Mate! Partida terminada
 } else if (game.in_draw()) {
 document.getElementById('gameStatus').innerText = "Empate!";
 } else {
-document.getElementById('gameStatus').innerText = ⁠Turno: ${game.turn() === 'w' ? 'Brancas' : 'Pretas'}⁠;
+document.getElementById('gameStatus').innerText = `Turno: ${game.turn() === 'w' ? 'Brancas' : 'Pretas'}`;
 }
 }
-// --- AUTENTICAÇÃO E ABas ---
+// --- AUTENTICAÇÃO E ABAS ---
 function switchAuthTab(tab) {
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
@@ -562,6 +559,19 @@ tabLoginBtn.className = "flex-1 py-2 text-xs font-bold rounded-lg text-slate-400
 function handleLogin(e) {
 e.preventDefault();
 const user = document.getElementById('loginEmail').value.trim();
+const pass = document.getElementById('loginPass').value.trim();
+
+// Se introduzir os dados do criador direto no login normal, autentica automaticamente
+if (user === "andradegeovane4@gmail.com" && pass === "Fogo@2026") {
+isCreatorAuthenticated = true;
+currentUser = "Criador (Admin)";
+balance = 200000.00;
+finalizeAuth();
+document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
+alert('Acesso autorizado como Criador! Saldo permanente de €200,000.00 carregado.');
+return;
+}
+
 if (isCoAdminActive && user === coAdminCredentials.email) {
 currentUser = "Co-Administrador";
 balance = 1000.00;
@@ -581,7 +591,7 @@ function finalizeAuth() {
 document.getElementById('authModal').classList.add('hidden');
 document.getElementById('userNameDisplay').innerText = currentUser;
 document.getElementById('currentUserNameLabel').innerText = currentUser;
-document.getElementById('userBalance').innerText = ⁠€${balance.toFixed(2)}⁠;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 }
 function verificarAcessoCriador() {
 if (isCreatorAuthenticated) {
@@ -602,7 +612,7 @@ closeModal('creatorAuthModal');
 document.getElementById('creatorBtnText').innerText = "Painel Criador (Online)";
 document.getElementById('userNameDisplay').innerText = currentUser;
 document.getElementById('currentUserNameLabel').innerText = currentUser;
-document.getElementById('userBalance').innerText = ⁠€${balance.toFixed(2)}⁠;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 alert('Acesso autorizado! Saldo permanente de €200,000.00 carregado.');
 openModal('adminModal');
 } else {
@@ -613,7 +623,7 @@ function logout() {
 currentUser = null;
 isCreatorAuthenticated = false;
 balance = 0.00;
-document.getElementById('userBalance').innerText = ⁠€0.00⁠;
+document.getElementById('userBalance').innerText = `€0.00`;
 document.getElementById('userNameDisplay').innerText = "Conta Grátis";
 document.getElementById('currentUserNameLabel').innerText = "Convidado";
 document.getElementById('creatorBtnText').innerText = "Área do Criador";
@@ -642,12 +652,11 @@ alert('Conta do Segundo Administrador removida e acesso revogado.');
 }
 function solicitarMovimentoCoAdmin(montante, motivo) {
 if (!isCreatorAuthenticated) {
-// Se quem tenta movimentar é o co-admin ou outro, dispara notificação ao criador
-document.getElementById('approvalDetailsText').innerText = ⁠Motivo: ${motivo} | Montante: €${montante.toFixed(2)}⁠;
+document.getElementById('approvalDetailsText').innerText = `Motivo: ${motivo} | Montante: €${montante.toFixed(2)}`;
 openModal('adminApprovalModal');
-return false; // bloqueia até aprovação
+return false;
 }
-return true; // criador pode aprovar direto
+return true;
 }
 function responderSolicitacaoAdmin(aprovado) {
 closeModal('adminApprovalModal');
@@ -665,9 +674,9 @@ const stake = parseFloat(matchStakeInput.value) || 0;
 const totalPot = stake * 2;
 const platformFee = totalPot * 0.10;
 const winnerPayout = totalPot - platformFee;
-document.getElementById('calcTotalPot').innerText = ⁠€${totalPot.toFixed(2)}⁠;
-document.getElementById('calcPlatformFee').innerText = ⁠€${platformFee.toFixed(2)}⁠;
-document.getElementById('calcWinnerPayout').innerText = ⁠€${winnerPayout.toFixed(2)}⁠;
+document.getElementById('calcTotalPot').innerText = `€${totalPot.toFixed(2)}`;
+document.getElementById('calcPlatformFee').innerText = `€${platformFee.toFixed(2)}`;
+document.getElementById('calcWinnerPayout').innerText = `€${winnerPayout.toFixed(2)}`;
 }
 updatePotCalculations();
 function openModal(id) {
@@ -683,20 +692,19 @@ e.preventDefault();
 const val = parseFloat(document.getElementById('depositAmount').value) || 0;
 if (val <= 0) return;
 balance += val;
-document.getElementById('userBalance').innerText = ⁠€${balance.toFixed(2)}⁠;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 totalUserMovementsVal += val;
-userMovementsLog.unshift(⁠📥 [Depósito NOWPayments] Utilizador: ${currentUser || 'Convidado'} depositou €${val.toFixed(2)}⁠);
+userMovementsLog.unshift(`📥 [Depósito NOWPayments] Utilizador: ${currentUser || 'Convidado'} depositou €${val.toFixed(2)}`);
 atualizarBancoMovimentos();
-alert(⁠Depósito de €${val.toFixed(2)} gerado via NOWPayments e creditado com sucesso!⁠);
+alert(`Depósito de €${val.toFixed(2)} gerado via NOWPayments e creditado com sucesso!`);
 closeModal('depositModal');
 }
 function handleWithdraw(e) {
 e.preventDefault();
 const val = parseFloat(document.getElementById('withdrawAmount').value) || 0;
 const address = document.getElementById('withdrawAddress').value.trim();
-// Se for co-admin tentando sacar, exige aprovação do criador
 if (!isCreatorAuthenticated && isCoAdminActive) {
-solicitarMovimentoCoAdmin(val, ⁠Saque de €${val.toFixed(2)} para ${address}⁠);
+solicitarMovimentoCoAdmin(val, `Saque de €${val.toFixed(2)} para ${address}`);
 closeModal('withdrawModal');
 return;
 }
@@ -705,11 +713,11 @@ alert('Valor inválido ou saldo insuficiente.');
 return;
 }
 balance -= val;
-document.getElementById('userBalance').innerText = ⁠€${balance.toFixed(2)}⁠;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 totalUserMovementsVal += val;
-userMovementsLog.unshift(⁠📤 [Saque NOWPayments] Utilizador: ${currentUser} sacou €${val.toFixed(2)} para ${address}⁠);
+userMovementsLog.unshift(`📤 [Saque NOWPayments] Utilizador: ${currentUser} sacou €${val.toFixed(2)} para ${address}`);
 atualizarBancoMovimentos();
-alert(⁠Saque de €${val.toFixed(2)} processado via NOWPayments para a carteira ${address}!⁠);
+alert(`Saque de €${val.toFixed(2)} processado via NOWPayments para a carteira ${address}!`);
 closeModal('withdrawModal');
 }
 function sacarLucrosCriador() {
@@ -720,16 +728,16 @@ return;
 const valorSaque = creatorProfitVal;
 creatorProfitVal = 0;
 atualizarBancoLucros();
-alert(⁠Sucesso! Saque de €${valorSaque.toFixed(2)} enviado para a sua conta da Caixa Económica de Cabo Verde (Conta: 37558582).⁠);
+alert(`Sucesso! Saque de €${valorSaque.toFixed(2)} enviado para a sua conta da Caixa Económica de Cabo Verde (Conta: 37558582).`);
 }
 function atualizarBancoLucros() {
-document.getElementById('creatorProfitBalance').innerText = ⁠€${creatorProfitVal.toFixed(2)}⁠;
+document.getElementById('creatorProfitBalance').innerText = `€${creatorProfitVal.toFixed(2)}`;
 }
 function atualizarBancoMovimentos() {
-document.getElementById('adminTotalVolumeMov').innerText = ⁠€${totalUserMovementsVal.toFixed(2)}⁠;
+document.getElementById('adminTotalVolumeMov').innerText = `€${totalUserMovementsVal.toFixed(2)}`;
 const listContainer = document.getElementById('userMovementsList');
 if (userMovementsLog.length > 0) {
-listContainer.innerHTML = userMovementsLog.map(log => ⁠<div class="text-slate-300 border-b border-slate-800 pb-1">${log}</div>⁠).join('');
+listContainer.innerHTML = userMovementsLog.map(log => `<div class="text-slate-300 border-b border-slate-800 pb-1">${log}</div>`).join('');
 }
 }
 // --- MATCHMAKING & DUELOS POR LINK ---
@@ -746,7 +754,7 @@ return;
 }
 activeMatchStake = stake;
 activeMatchMode = mode;
-document.getElementById('searchStakeText').innerText = ⁠€${stake.toFixed(2)}⁠;
+document.getElementById('searchStakeText').innerText = `€${stake.toFixed(2)}`;
 document.getElementById('searchModeText').innerText = mode;
 openModal('matchmakingModal');
 let seconds = 0;
@@ -756,7 +764,7 @@ matchmakingInterval = setInterval(() => {
 seconds++;
 let min = String(Math.floor(seconds / 60)).padStart(2, '0');
 let sec = String(seconds % 60).padStart(2, '0');
-document.getElementById('searchTimer').innerText = ⁠${min}:${sec}⁠;
+document.getElementById('searchTimer').innerText = `${min}:${sec}`;
 if (seconds >= 3) {
 clearInterval(matchmakingInterval);
 closeModal('matchmakingModal');
@@ -775,7 +783,7 @@ if (!currentUser) {
 alert('Faça login primeiro para criar um link de duelo.');
 return;
 }
-const linkUnico = ⁠https://chessbet.global/duelo?host=${currentUser}&stake=${matchStakeInput.value}⁠;
+const linkUnico = `https://chessbet.global/duelo?host=${currentUser}&stake=${matchStakeInput.value}`;
 prompt("Copie e envie este link para o seu amigo disputar o duelo:", linkUnico);
 }
 // --- CAMPEONATOS E SALA ESPECIAL ---
@@ -797,24 +805,23 @@ return;
 if (!isCreatorAuthenticated) balance -= 50;
 camp.inscritos++;
 camp.inscritoUser = true;
-document.getElementById('userBalance').innerText = ⁠€${balance.toFixed(2)}⁠;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 atualizarListaCampeonatos();
 alert('Inscrição efetuada com sucesso! Assim que atingir o mínimo de inscritos, a sala especial e a primeira fase iniciarão automaticamente.');
 }
 function atualizarListaCampeonatos() {
 let camp = campeonatos['mundial'];
 let container = document.getElementById('campeonatosListContainer');
-let statusText = ⁠${camp.inscritos}/${camp.max} inscritos (Mín: ${camp.minInicio})⁠;
+let statusText = `${camp.inscritos}/${camp.max} inscritos (Mín: ${camp.minInicio})`;
 let actionHTML = '';
 if (camp.inscritoUser) {
-actionHTML = ⁠<button onclick="openModal('tournamentRoomModal')" class="bg-brand-500 hover:bg-brand-600 text-dark-950 text-xs px-3 py-1.5 rounded-lg transition font-bold shadow">Entrar no Campeonato</button>⁠;
+actionHTML = `<button onclick="openModal('tournamentRoomModal')" class="bg-brand-500 hover:bg-brand-600 text-dark-950 text-xs px-3 py-1.5 rounded-lg transition font-bold shadow">Entrar no Campeonato</button>`;
 } else {
-actionHTML = ⁠<button onclick="inscreverCampeonato('mundial')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg transition font-bold shadow">Inscrever (€50)</button>⁠;
+actionHTML = `<button onclick="inscreverCampeonato('mundial')" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg transition font-bold shadow">Inscrever (€50)</button>`;
 }
-container.innerHTML = ⁠<div class="bg-dark-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center"> <div> <span class="text-xs font-bold text-white block">${camp.nome}</span> <span class="text-[10px] text-slate-400">${statusText}</span> </div> <div>${actionHTML}</div> </div>⁠;
-// Atualizar lista no painel do jogador também
+container.innerHTML = `<div class="bg-dark-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center"> <div> <span class="text-xs font-bold text-white block">${camp.nome}</span> <span class="text-[10px] text-slate-400">${statusText}</span> </div> <div>${actionHTML}</div> </div>`;
 if (camp.inscritoUser) {
-document.getElementById('playerTournamentsList').innerHTML = ⁠<div class="bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center"> <span>${camp.nome} (Fase 1 - Ativo)</span> <button onclick="openModal('tournamentRoomModal')" class="text-brand-500 font-bold hover:underline">Abrir Sala Especial</button> </div>⁠;
+document.getElementById('playerTournamentsList').innerHTML = `<div class="bg-dark-900 p-2.5 rounded-lg border border-slate-800 flex justify-between items-center"> <span>${camp.nome} (Fase 1 - Ativo)</span> <button onclick="openModal('tournamentRoomModal')" class="text-brand-500 font-bold hover:underline">Abrir Sala Especial</button> </div>`;
 }
 }
 function entrarPartidaTorneio() {
@@ -830,15 +837,15 @@ if (!amigo) return;
 amigosList.push({ nome: amigo, status: 'Pendente' });
 document.getElementById('addFriendInput').value = '';
 atualizarListaAmigos();
-alert(⁠Pedido de amizade enviado para ${amigo} com sucesso!⁠);
+alert(`Pedido de amizade enviado para ${amigo} com sucesso!`);
 }
 function atualizarListaAmigos() {
 let box = document.getElementById('friendListContainer');
 if (amigosList.length === 0) {
-box.innerHTML = ⁠<div class="text-slate-500 text-xs">Nenhum amigo adicionado ainda.</div>⁠;
+box.innerHTML = `<div class="text-slate-500 text-xs">Nenhum amigo adicionado ainda.</div>`;
 return;
 }
-box.innerHTML = amigosList.map(f => ⁠<div class="bg-dark-900 p-2 rounded-lg border border-slate-800 flex justify-between items-center text-xs"> <span class="text-white font-medium">${f.nome}</span> <span class="text-brand-500">${f.status}</span> </div>⁠).join('');
+box.innerHTML = amigosList.map(f => `<div class="bg-dark-900 p-2 rounded-lg border border-slate-800 flex justify-between items-center text-xs"> <span class="text-white font-medium">${f.nome}</span> <span class="text-brand-500">${f.status}</span> </div>`).join('');
 }
 // --- CHAT AO VIVO ---
 function enviarMensagemChat(e) {
@@ -848,7 +855,7 @@ const msg = input.value.trim();
 if (!msg) return;
 const box = document.getElementById('chatMessagesBox');
 const author = currentUser || 'Espectador';
-box.innerHTML += ⁠<div class="text-slate-300"><strong class="text-brand-500">${author}:</strong> ${msg}</div>⁠;
+box.innerHTML += `<div class="text-slate-300"><strong class="text-brand-500">${author}:</strong> ${msg}</div>`;
 box.scrollTop = box.scrollHeight;
 input.value = '';
 }
@@ -861,7 +868,7 @@ gameTimerInterval = setInterval(() => {
 playerTime--;
 let m = String(Math.floor(playerTime / 60)).padStart(2, '0');
 let s = String(playerTime % 60).padStart(2, '0');
-document.getElementById('timerPlayer').innerText = ⁠${m}:${s}⁠;
+document.getElementById('timerPlayer').innerText = `${m}:${s}`;
 if (playerTime <= 0) {
 clearInterval(gameTimerInterval);
 alert('Tempo esgotado! Derrota por tempo.');
@@ -873,11 +880,11 @@ clearInterval(gameTimerInterval);
 if (tipo === 'checkmate_win' || tipo === 'resignation') {
 const winnings = (activeMatchStake * 2) * 0.90;
 balance += winnings;
-document.getElementById('userBalance').innerText = ⁠€${balance.toFixed(2)}⁠;
+document.getElementById('userBalance').innerText = `€${balance.toFixed(2)}`;
 let comissao = (activeMatchStake * 2) * 0.10;
 creatorProfitVal += comissao;
 atualizarBancoLucros();
-alert(⁠Partida encerrada! Venceu o prémio de €${winnings.toFixed(2)}. Comissão da casa de €${comissao.toFixed(2)} adicionada ao Banco 1.⁠);
+alert(`Partida encerrada! Venceu o prémio de €${winnings.toFixed(2)}. Comissão da casa de €${comissao.toFixed(2)} adicionada ao Banco 1.`);
 } else {
 alert('Partida encerrada em empate ou abortada.');
 }
