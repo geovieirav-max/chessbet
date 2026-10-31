@@ -493,9 +493,21 @@ onSnapEnd: onSnapEnd
 });
 
 // Evento de clique nas casas do tabuleiro para mostrar os pontinhos
-$('#board').on('click', '.square-55d63', function() {
-const square = $(this).attr('data-square');
-onSquareClick(square);
+$('#board').on('click', '[class*=square-]', function () {
+
+    let classes = $(this).attr('class').split(' ');
+    let square = null;
+
+    for (let c of classes) {
+        if (/^[a-h][1-8]$/.test(c)) {
+            square = c;
+            break;
+        }
+    }
+
+    if (square) {
+        onSquareClick(square);
+    }
 });
 
 atualizarListaCampeonatos();
@@ -550,20 +562,55 @@ selectedSquare = null;
 }
 
 function highlightSquare(square, color) {
-const $square = $('#board .square-' + square);
-$square.css('background', color);
-}
 
+    const $square = $('#board .' + square);
+
+    $square.css({
+        background: color,
+        transition: 'all 0.2s ease'
+    });
+
+}
 function highlightValidTarget(square) {
-const $square = $('#board .square-' + square);
-if ($square.find('.move-dot').length === 0) {
-$square.append('<div class="move-dot" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 16px; height: 16px; background-color: rgba(234, 179, 8, 0.8); border-radius: 50%; pointer-events: none; z-index: 10;"></div>');
-}
-}
 
+    const $square = $('#board .' + square);
+
+    if ($square.find('.move-dot').length) return;
+
+    $square.css('position', 'relative');
+
+    $square.append(`
+        <div class="move-dot"
+             style="
+                position:absolute;
+                top:50%;
+                left:50%;
+                transform:translate(-50%,-50%);
+                width:18px;
+                height:18px;
+                border-radius:50%;
+                background:#eab308;
+                opacity:.85;
+                z-index:999;
+                pointer-events:none;
+             ">
+        </div>
+    `);
+
+}
 function removeHighlights() {
-$('#board .square-55d63').css('background', '');
-$('#board .move-dot').remove();
+
+    $('#board .move-dot').remove();
+
+    $('#board [class*=square-]').each(function () {
+
+        $(this).css({
+            background: '',
+            position: ''
+        });
+
+    });
+
 }
 
 function onDragStart(source, piece, position, orientation) {
